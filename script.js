@@ -273,35 +273,45 @@ function showSecureForm() {
 async function handleSubmit(event) {
     event.preventDefault();
 
-    // Coleta os dados do formulário
     const form = event.target;
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
-    Object.assign(leadData, data); // Mantém os dados no leadData para referência interna
+    Object.assign(leadData, data);
+
+    // --- NOVA LÓGICA AQUI PARA ADICIONAR _replyto ---
+    let replyToEmail = '';
+    if (leadData.type === 'pf') {
+        replyToEmail = leadData.email;
+    } else if (leadData.type === 'pj') {
+        replyToEmail = leadData.responsavel_email; // Ou 'empresa_email', dependendo da sua preferência para "responder"
+    }
+
+    if (replyToEmail) {
+        formData.append('_replyto', replyToEmail);
+    }
+    // --- FIM DA NOVA LÓGICA ---
 
     clearInputArea();
     addMessage("Enviando seus dados...", 'user');
 
     try {
-        // URL do seu endpoint Formspree (SUBSTITUA COM O SEU CÓDIGO ÚNICO DO FORMSPREE)
-        const formspreeUrl = 'https://formspree.io/f/myzdovvl'; 
+        const formspreeUrl = 'https://formspree.io/f/myzdovvl';
 
         const response = await fetch(formspreeUrl, {
             method: 'POST',
-            body: formData, // Envia o FormData diretamente para incluir o arquivo anexo
+            body: formData,
             headers: {
-                'Accept': 'application/json' // Informa ao Formspree que esperamos JSON como resposta
+                'Accept': 'application/json'
             }
         });
 
-        if (response.ok) { // Verifica se a requisição foi bem-sucedida (status 200)
+        if (response.ok) {
             const leadName = leadData.name || leadData.responsavel_nome;
             addMessage(`Perfeito, ${leadName}! Recebi tudo certinho.`);
             setTimeout(() => {
                 addMessage("Nossa equipe já está analisando seus dados para preparar a melhor proposta de economia para você. Em breve, um especialista entrará em contato. Obrigado por se juntar à nossa comunidade de energia limpa! ✅");
             }, 1200);
         } else {
-            // Se houver erro, tenta ler a mensagem de erro do Formspree
             const errorData = await response.json();
             console.error('Erro ao enviar para Formspree:', errorData);
             addMessage("Ocorreu um erro ao enviar seus dados. Por favor, tente novamente mais tarde ou entre em contato direto. 😥", 'ia');
@@ -311,7 +321,6 @@ async function handleSubmit(event) {
         addMessage("Ocorreu um erro de conexão. Por favor, verifique sua internet e tente novamente. 😥", 'ia');
     }
 }
-    
     
 
 // Funções para abrir e fechar o modal de privacidade
