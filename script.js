@@ -129,7 +129,7 @@ function showImpactMessage() {
 
 function showProposalButton() {
     const button = document.createElement('button');
-    button.textContent = 'Começar a economizar agora!';
+    button.textContent = 'Começar a economizar agora sem custo!';
     button.className = 'w-full bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors chat-message';
     button.onclick = () => {
         clearInputArea();
@@ -272,27 +272,47 @@ function showSecureForm() {
 
 async function handleSubmit(event) {
     event.preventDefault();
-    const formData = new FormData(event.target);
+
+    // Coleta os dados do formulário
+    const form = event.target;
+    const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
-    Object.assign(leadData, data);
-    
+    Object.assign(leadData, data); // Mantém os dados no leadData para referência interna
+
     clearInputArea();
     addMessage("Enviando seus dados...", 'user');
 
-    console.log("--- SIMULAÇÃO DE ENVIO DE E-MAIL ---");
-    console.log(`Para: marlonlotici2@gmail.com`);
-    console.log(`Assunto: Novo Lead (${leadData.type.toUpperCase()}) para Simulação Enerzee`);
-    console.log("Dados do Lead:", leadData);
-    console.log("------------------------------------");
-    
-    setTimeout(() => {
-        const leadName = leadData.name || leadData.responsavel_nome;
-        addMessage(`Perfeito, ${leadName}! Recebi tudo certinho.`);
-        setTimeout(() => {
-            addMessage("Nossa equipe já está analisando seus dados para preparar a melhor proposta de economia para você. Em breve, um especialista entrará em contato. Obrigado por se juntar à nossa comunidade de energia limpa! ✅");
-        }, 1200);
-    }, 1000);
+    try {
+        // URL do seu endpoint Formspree (SUBSTITUA COM O SEU CÓDIGO ÚNICO DO FORMSPREE)
+        const formspreeUrl = 'https://formspree.io/f/myzdovvl'; 
+
+        const response = await fetch(formspreeUrl, {
+            method: 'POST',
+            body: formData, // Envia o FormData diretamente para incluir o arquivo anexo
+            headers: {
+                'Accept': 'application/json' // Informa ao Formspree que esperamos JSON como resposta
+            }
+        });
+
+        if (response.ok) { // Verifica se a requisição foi bem-sucedida (status 200)
+            const leadName = leadData.name || leadData.responsavel_nome;
+            addMessage(`Perfeito, ${leadName}! Recebi tudo certinho.`);
+            setTimeout(() => {
+                addMessage("Nossa equipe já está analisando seus dados para preparar a melhor proposta de economia para você. Em breve, um especialista entrará em contato. Obrigado por se juntar à nossa comunidade de energia limpa! ✅");
+            }, 1200);
+        } else {
+            // Se houver erro, tenta ler a mensagem de erro do Formspree
+            const errorData = await response.json();
+            console.error('Erro ao enviar para Formspree:', errorData);
+            addMessage("Ocorreu um erro ao enviar seus dados. Por favor, tente novamente mais tarde ou entre em contato direto. 😥", 'ia');
+        }
+    } catch (error) {
+        console.error('Erro na requisição de rede:', error);
+        addMessage("Ocorreu um erro de conexão. Por favor, verifique sua internet e tente novamente. 😥", 'ia');
+    }
 }
+    
+    
 
 // Funções para abrir e fechar o modal de privacidade
 function openPrivacyModal() {
