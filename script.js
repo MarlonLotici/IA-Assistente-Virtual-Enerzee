@@ -43,7 +43,7 @@ function clearInputArea() {
 
 function startConversation() {
     updateProgress(10, 'calculo');
-    addMessage("Olá! 👋 Sou o assistente virtual da Enerzee. Vamos descobrir em 30 segundos quanto você pode economizar na sua conta de luz?");
+    addMessage("Olá! 👋 Sou o assistente Virtual do Consultor Marlon Lotici da Enerzee. Vamos descobrir em 30 segundos quanto você pode economizar na sua conta de luz?");
     setTimeout(() => {
         addMessage("Para começar, me diga qual o valor médio da sua fatura. É 100% gratuito e sem compromisso.");
         showCalculatorInput();
@@ -93,11 +93,11 @@ function handleCalculation(event) {
 
 function showImpactButton() {
     const button = document.createElement('button');
-    button.innerHTML = 'Descobrir Meu Impacto <i data-lucide="arrow-right" class="inline w-4 h-4 ml-1"></i>';
+    button.innerHTML = 'Descobrir Meu Impacto no Planeta<i data-lucide="arrow-right" class="inline w-4 h-4 ml-1"></i>';
     button.className = 'w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors chat-message flex items-center justify-center';
     button.onclick = () => {
         clearInputArea();
-        addMessage("Descobrir Meu Impacto", 'user');
+        addMessage("Descobrir Meu Impacto no Planeta", 'user');
         setTimeout(showImpactMessage, 500);
     };
     chatInputArea.appendChild(button);
@@ -106,7 +106,7 @@ function showImpactButton() {
 
 function showImpactMessage() {
     updateProgress(66, 'impacto');
-    addMessage("E o melhor: essa economia vem de uma fonte 100% limpa. Ao se juntar à Enerzee, você não está apenas aliviando o bolso, <strong>está assumindo um papel fundamental na regeneração do nosso planeta.</strong>", 'ia', true);
+    addMessage("E o melhor: essa economia vem de uma fonte 100% limpa. Ao se juntar à Enerzee, você não está apenas aliviando o bolso, <strong>está assumindo um papel fundamental na regeneração da Natureza.</strong>", 'ia', true);
     setTimeout(() => {
             const impactText = `
                 <div class="impact-card p-3 rounded-lg">
@@ -129,11 +129,11 @@ function showImpactMessage() {
 
 function showProposalButton() {
     const button = document.createElement('button');
-    button.textContent = 'Quero Minha Proposta Gratuita!';
+    button.textContent = 'Começar a economizar agora!';
     button.className = 'w-full bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors chat-message';
     button.onclick = () => {
         clearInputArea();
-        addMessage("Quero Minha Proposta Gratuita!", 'user');
+        addMessage("Começar a Economizar Agora!", 'user');
         setTimeout(bridgeToFormalProposal, 500);
     };
     chatInputArea.appendChild(button);
