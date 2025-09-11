@@ -1,0 +1,87 @@
+body { 
+    font-family: 'Poppins', sans-serif; 
+}
+
+#app-container {
+    display: flex;
+    flex-direction: column;
+    /* Remover height: 100vh; para permitir que cresça */
+    /* Adicionar min-height para garantir que sempre ocupe a tela em casos de pouco conteúdo */
+    min-height: 100vh; /* Garante que o container ocupe toda a altura da tela no mínimo */
+    max-height: 95vh; /* Limita a altura máxima para não estourar em telas grandes */
+    overflow-y: auto; /* Adiciona scroll ao container principal se o conteúdo for muito longo */
+}
+
+#chat-container { 
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+    /* Remover o overflow-hidden para garantir que o conteúdo possa rolar */
+    overflow-y: auto; /* Permite que apenas a área de mensagens role, se necessário */
+    padding-bottom: 20px; /* Adiciona um padding extra para garantir espaço para o último botão */
+}
+
+.chat-message { 
+    animation: fadeIn 0.5s ease-in-out; 
+}
+
+.impact-card { 
+    background-color: #f0fff4; 
+    border-left: 4px solid #2f855a; 
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.progress-bar-fill { 
+    transition: width 0.5s ease-in-out; 
+}
+
+/* Regras de Responsividade para Dispositivos Móveis */
+@media (max-width: 640px) {
+    .main-container {
+        min-height: 100vh; /* Permite que o container cresça */
+        height: auto; /* Altura automática baseada no conteúdo */
+        max-height: none;
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    #app-container {
+        height: auto; /* Permite que o app container cresça */
+        max-height: none; /* Remove a altura máxima em mobile */
+        min-height: 100vh; /* Garante que ele ocupe toda a altura da tela em mobile */
+        overflow-y: auto; /* Permite rolagem no container principal em mobile */
+    }
+    header h1 {
+        font-size: 1.25rem; /* text-xl */
+    }
+    #chat-container {
+        padding-bottom: 10px; /* Ajusta o padding em mobile */
+    }
+}
+
+/* Adicionando algumas regras para o chat-input-area para garantir que ela sempre esteja visível */
+#chat-input-area {
+    position: sticky; /* Fixa a área de input na parte inferior */
+    bottom: 0;
+    background-color: white; /* Garante que o fundo seja branco ao rolar */
+    z-index: 10; /* Garante que fique acima de outros elementos */
+    padding-top: 1rem; /* Mantém o padding */
+    padding-bottom: 1rem; /* Adiciona padding na parte inferior */
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05); /* Sutil sombra para destacar */
+}
+
+/* Ajuste para o formulário para garantir que ele não se estenda demais horizontalmente */
+#lead-form {
+    max-width: 100%; /* Garante que o formulário não estoure o container */
+}
+/* Estilos para o Pop-up (se necessário, mas Tailwind já cobre muito) */
+/* .hidden no Tailwind já faz o trabalho de display: none; */
+/* Apenas para garantir que o modal-content tenha uma altura máxima e rolagem */
+#privacy-modal > div {
+    max-height: 90vh; /* Para garantir que o pop-up não estoure a tela verticalmente */
+    overflow-y: auto; /* Permite rolagem dentro do pop-up se o conteúdo for muito longo */
+}
