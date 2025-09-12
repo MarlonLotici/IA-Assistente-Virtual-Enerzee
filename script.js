@@ -242,25 +242,25 @@ function showSecureForm() {
     `;
     chatInputArea.appendChild(formContainer);
     
-    // --- INÍCIO DA CORREÇÃO ---
     const cloudinaryWidget = cloudinary.createUploadWidget({
         cloudName: 'di3ezpmyb', 
         uploadPreset: 'ci0yimyz',
         folder: 'faturas_enerzee',
-        // A linha abaixo é a correção definitiva. Ela força o Cloudinary a detectar o tipo do arquivo.
-        resource_type: "auto", 
         language: 'pt',
         text: { "pt": { "or_drag_a_file_here": "ou arraste o arquivo aqui" } }
     }, (error, result) => { 
         if (!error && result && result.event === "success") { 
-            // Com a correção acima, a URL já virá correta e não precisamos mais de lógica extra.
-            document.getElementById('fatura-url').value = result.info.secure_url;
+            let finalUrl = result.info.secure_url;
+            // LÓGICA DE CORREÇÃO DA URL
+            if (result.info.resource_type === 'raw' || result.info.format === 'pdf') {
+                finalUrl = finalUrl.replace('/image/upload/', '/raw/upload/');
+            }
+            document.getElementById('fatura-url').value = finalUrl;
             const fileNameDisplay = document.getElementById('file-name-display');
             fileNameDisplay.textContent = `Arquivo enviado: ${result.info.original_filename}`;
             fileNameDisplay.classList.add('text-green-600', 'font-semibold');
         }
     });
-    // --- FIM DA CORREÇÃO ---
 
     document.getElementById('upload-widget-btn').onclick = () => cloudinaryWidget.open();
     document.getElementById('privacy-link').onclick = (e) => { e.preventDefault(); openPrivacyModal(); };
