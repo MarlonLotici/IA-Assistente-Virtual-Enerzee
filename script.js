@@ -12,6 +12,7 @@ const closePrivacyModalBtn = document.getElementById('close-privacy-modal');
 
 let leadData = { type: null };
 
+// --- LÓGICA DO CHAT (SEM ALTERAÇÕES) ---
 function updateProgress(percentage, activeLabel) {
     progressBar.style.width = `${percentage}%`;
     Object.values(progressLabels).forEach(label => label.classList.remove('font-bold', 'text-green-600'));
@@ -19,57 +20,41 @@ function updateProgress(percentage, activeLabel) {
         progressLabels[activeLabel].classList.add('font-bold', 'text-green-600');
     }
 }
-
 function addMessage(text, sender = 'ia', isHtml = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
     const bubble = document.createElement('div');
-    if (isHtml) {
-        bubble.innerHTML = text;
-    } else {
-        bubble.textContent = text;
-    }
+    if (isHtml) bubble.innerHTML = text;
+    else bubble.textContent = text;
     bubble.className = `max-w-xs md:max-w-md p-3 rounded-2xl shadow-sm ${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`;
     messageDiv.appendChild(bubble);
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     lucide.createIcons();
 }
-
 function showTypingIndicator() {
     const indicator = document.createElement('div');
     indicator.id = 'typing-indicator';
     indicator.className = 'chat-message flex justify-start';
-    indicator.innerHTML = `
-        <div class="bg-gray-200 p-3 rounded-2xl shadow-sm">
-            <div class="typing-indicator">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            </div>
-        </div>
-    `;
+    indicator.innerHTML = `<div class="bg-gray-200 p-3 rounded-2xl shadow-sm"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
     chatMessages.appendChild(indicator);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 function hideTypingIndicator() {
     const indicator = document.getElementById('typing-indicator');
-    if (indicator) {
-        indicator.remove();
-    }
+    if (indicator) indicator.remove();
 }
-
 function clearInputArea() {
     chatInputArea.innerHTML = '';
 }
 
+// --- FLUXO DA CONVERSA ---
 function startConversation() {
     updateProgress(10, 'calculo');
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-        addMessage("Olá! 👋 Sou o assistente virtual do Consultor Marlon da Enerzee. Vamos descobrir em 30 segundos quanto você pode economizar na sua conta de luz?");
+        addMessage("Olá! 👋 Sou o assistente virtual da Enerzee. Vamos descobrir em 30 segundos quanto você pode economizar na sua conta de luz?");
         showTypingIndicator();
         setTimeout(() => {
             hideTypingIndicator();
@@ -96,7 +81,6 @@ function handleCalculation(event) {
     const billValue = parseFloat(document.getElementById('billValue').value);
     addMessage(`R$ ${billValue.toFixed(2).replace('.', ',')}`, 'user');
     clearInputArea();
-    
     const SAVING_PERCENTAGE = 0.15;
     const monthlySaving = billValue * SAVING_PERCENTAGE;
     const semestralSaving = monthlySaving * 6;
@@ -106,14 +90,7 @@ function handleCalculation(event) {
     setTimeout(() => {
         hideTypingIndicator();
         updateProgress(33, 'calculo');
-        const resultText = `
-            <p class="font-semibold">Excelente! Com base nesse valor, seu potencial de economia é de:</p>
-            <ul class="list-none mt-2 space-y-1">
-                <li><strong>Mensal:</strong> <span class="font-bold text-green-600">R$ ${monthlySaving.toFixed(2).replace('.', ',')}</span></li>
-                <li><strong>Semestral:</strong> <span class="font-bold text-green-600">R$ ${semestralSaving.toFixed(2).replace('.', ',')}</span></li>
-                <li><strong>Anual:</strong> <span class="font-bold text-green-600">R$ ${annualSaving.toFixed(2).replace('.', ',')}</span></li>
-            </ul>
-        `;
+        const resultText = `<p class="font-semibold">Excelente! Com base nesse valor, seu potencial de economia é de:</p><ul class="list-none mt-2 space-y-1"><li><strong>Mensal:</strong> <span class="font-bold text-green-600">R$ ${monthlySaving.toFixed(2).replace('.', ',')}</span></li><li><strong>Semestral:</strong> <span class="font-bold text-green-600">R$ ${semestralSaving.toFixed(2).replace('.', ',')}</span></li><li><strong>Anual:</strong> <span class="font-bold text-green-600">R$ ${annualSaving.toFixed(2).replace('.', ',')}</span></li></ul>`;
         addMessage(resultText, 'ia', true);
         showTypingIndicator();
         setTimeout(() => {
@@ -126,11 +103,11 @@ function handleCalculation(event) {
 
 function showImpactButton() {
     const button = document.createElement('button');
-    button.innerHTML = 'Descobrir meu impacto ambiental<i data-lucide="arrow-right" class="inline w-4 h-4 ml-1"></i>';
+    button.innerHTML = 'Ver meu impacto <i data-lucide="arrow-right" class="inline w-4 h-4 ml-1"></i>';
     button.className = 'w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive chat-message flex items-center justify-center';
     button.onclick = () => {
         clearInputArea();
-        addMessage("Descobrir meu impacto ambiental", 'user');
+        addMessage("Ver meu impacto", 'user');
         showTypingIndicator();
         setTimeout(showImpactMessage, 800);
     };
@@ -141,21 +118,11 @@ function showImpactButton() {
 function showImpactMessage() {
     hideTypingIndicator();
     updateProgress(66, 'impacto');
-    addMessage("Essa economia vem de uma fonte 100% limpa. Ao se juntar à Enerzee, você não está apenas aliviando o bolso, <strong>está assumindo um papel fundamental na regeneração do nosso planeta.</strong>", 'ia', true);
+    addMessage("E o melhor: essa economia vem de uma fonte 100% limpa. Ao se juntar à Enerzee, você não está apenas aliviando o bolso, <strong>está assumindo um papel fundamental na regeneração do nosso planeta.</strong>", 'ia', true);
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-         const impactText = `
-            <div class="impact-card p-3 rounded-lg">
-                <div class="flex items-center gap-3">
-                    <i data-lucide="leaf" class="w-8 h-8 text-green-600 flex-shrink-0"></i>
-                    <div>
-                        <p class="font-bold text-gray-800">Você se junta a uma comunidade com +1.000 pessoas!</p>
-                        <p class="text-sm text-gray-600">Juntas, já evitamos a emissão de 960 toneladas de CO₂, o mesmo que plantar +43.000 árvores ou tirar +560 carros das ruas! 🚗🌳</p>
-                    </div>
-                </div>
-            </div>
-        `;
+         const impactText = `<div class="impact-card p-3 rounded-lg"><div class="flex items-center gap-3"><i data-lucide="leaf" class="w-8 h-8 text-green-600 flex-shrink-0"></i><div><p class="font-bold text-gray-800">Você se junta a uma comunidade com +1.000 pessoas!</p><p class="text-sm text-gray-600">Juntas, já evitamos a emissão de 960 toneladas de CO₂, o mesmo que plantar +43.000 árvores ou tirar +560 carros das ruas! 🚗🌳</p></div></div></div>`;
         addMessage(impactText, 'ia', true);
         showTypingIndicator();
         setTimeout(() => {
@@ -188,10 +155,7 @@ function bridgeToFormalProposal() {
         addMessage("Para qual tipo de imóvel seria a simulação?");
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'flex gap-2 mt-2 chat-message';
-        buttonContainer.innerHTML = `
-            <button onclick="handleLeadType('pf')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Residência</button>
-            <button onclick="handleLeadType('pj')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Empresa</button>
-        `;
+        buttonContainer.innerHTML = `<button onclick="handleLeadType('pf')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Residência</button><button onclick="handleLeadType('pj')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Empresa</button>`;
         chatInputArea.appendChild(buttonContainer);
     }, 1500);
 }
@@ -222,106 +186,76 @@ function showProceedButton() {
     chatInputArea.appendChild(button);
 }
 
+// --- NOVA LÓGICA DE FORMULÁRIO E UPLOAD ---
+
 function showSecureForm() {
     const formContainer = document.createElement('form');
     formContainer.id = 'lead-form';
     formContainer.className = 'chat-message space-y-3 p-4 bg-gray-50 rounded-lg border';
     
-    const pfFields = `
-        <input name="name" type="text" placeholder="Nome Completo" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
-        <div>
-            <input name="cpf" type="text" placeholder="CPF" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
-            <small class="text-xs text-gray-500 px-1">Necessário para vincular a proposta ao titular da conta.</small>
-        </div>
-        <input name="email" type="email" placeholder="Seu melhor e-mail" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
-        <input name="phone" type="tel" placeholder="Telefone (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
-    `;
-    
-    const pjFields = `
-         <input name="responsavel_nome" type="text" placeholder="Nome Completo do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
-         <input name="responsavel_cpf" type="text" placeholder="CPF do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
-         <input name="responsavel_email" type="email" placeholder="E-mail Pessoal do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
-         <input name="empresa_email" type="email" placeholder="E-mail da Empresa" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
-         <input name="responsavel_telefone" type="tel" placeholder="Telefone Pessoal (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
-         <input name="empresa_telefone" type="tel" placeholder="Telefone da Empresa (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
-    `;
+    const pfFields = `<input name="name" type="text" placeholder="Nome Completo" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><div><input name="cpf" type="text" placeholder="CPF" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><small class="text-xs text-gray-500 px-1">Necessário para vincular a proposta ao titular da conta.</small></div><input name="email" type="email" placeholder="Seu melhor e-mail" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="phone" type="tel" placeholder="Telefone (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">`;
+    const pjFields = `<input name="responsavel_nome" type="text" placeholder="Nome Completo do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_cpf" type="text" placeholder="CPF do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_email" type="email" placeholder="E-mail Pessoal do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="empresa_email" type="email" placeholder="E-mail da Empresa" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_telefone" type="tel" placeholder="Telefone Pessoal (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="empresa_telefone" type="tel" placeholder="Telefone da Empresa (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">`;
 
-    const fileUploadSection = `
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Anexe sua última fatura de energia:</label>
-            <div class="grid grid-cols-2 gap-2">
-                <button type="button" id="upload-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive">
-                    <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-                    <span>Upload</span>
-                </button>
-                <button type="button" id="camera-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive">
-                    <i data-lucide="camera" class="w-4 h-4"></i>
-                    <span>Tirar Foto</span>
-                </button>
-            </div>
-            <p id="file-name-display" class="text-xs text-gray-500 mt-2 text-center"></p>
-            <input type="file" id="fatura-input" name="fatura" class="hidden" accept="image/*,.pdf" required>
-        </div>
-    `;
+    // Botão de upload é criado aqui, mas a lógica de clique é adicionada depois
+    const fileUploadSection = `<div><label class="block text-sm font-medium text-gray-700 mb-1">Anexe sua última fatura de energia:</label><button type="button" id="upload-widget-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive"><i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Anexar Fatura</span></button><p id="file-name-display" class="text-xs text-gray-500 mt-2 text-center"></p></div>`;
 
     formContainer.innerHTML = `
-        <input type="hidden" name="access_key" value="4ee5d80b-0860-4b79-a30d-5c0392c46ff4">
+        <input type="hidden" name="access_key" value="SUA_CHAVE_DE_ACESSO_AQUI">
         <input type="hidden" name="subject" value="Novo Lead para Simulação Enerzee!">
+        <input type="hidden" id="fatura-url" name="fatura_url" value="">
         ${leadData.type === 'pf' ? pfFields : pjFields}
         ${fileUploadSection}
-        <div class="flex items-center justify-center gap-4 text-xs text-gray-500 pt-2">
-            <span class="flex items-center gap-1"><i data-lucide="lock" class="w-4 h-4"></i> Ambiente Seguro</span>
-            <a href="#" id="privacy-link" class="hover:underline">Política de Privacidade</a>
-        </div>
-        <button type="button" id="submit-btn" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg btn-interactive">Enviar para Simulação</button>
+        <div class="flex items-center justify-center gap-4 text-xs text-gray-500 pt-2"><span class="flex items-center gap-1"><i data-lucide="lock" class="w-4 h-4"></i> Ambiente Seguro</span><a href="#" id="privacy-link" class="hover:underline">Política de Privacidade</a></div>
+        <button type="submit" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg btn-interactive">Enviar para Simulação</button>
     `;
     chatInputArea.appendChild(formContainer);
-
-    document.getElementById('submit-btn').onclick = handleSubmit;
-
-    const faturaInput = document.getElementById('fatura-input');
-    const uploadBtn = document.getElementById('upload-btn');
-    const cameraBtn = document.getElementById('camera-btn');
-    const fileNameDisplay = document.getElementById('file-name-display');
-
-    uploadBtn.onclick = () => {
-        faturaInput.removeAttribute('capture');
-        faturaInput.click();
-    };
-
-    cameraBtn.onclick = () => {
-        faturaInput.setAttribute('capture', 'environment');
-        faturaInput.click();
-    };
-
-    faturaInput.onchange = (event) => {
-        if (event.target.files && event.target.files.length > 0) {
-            fileNameDisplay.textContent = `Arquivo: ${event.target.files[0].name}`;
+    
+    // Configura o widget do Cloudinary
+    const cloudinaryWidget = cloudinary.createUploadWidget({
+        cloudName: 'di3ezpmyb', 
+        uploadPreset: 'ci0yimyz',
+        folder: 'faturas_enerzee',
+        language: 'pt',
+        text: { "pt": { "or_drag_a_file_here": "ou arraste o arquivo aqui" } }
+    }, (error, result) => { 
+        if (!error && result && result.event === "success") { 
+            console.log('Upload concluído: ', result.info);
+            document.getElementById('fatura-url').value = result.info.secure_url;
+            const fileNameDisplay = document.getElementById('file-name-display');
+            fileNameDisplay.textContent = `Arquivo enviado: ${result.info.original_filename}`;
             fileNameDisplay.classList.add('text-green-600', 'font-semibold');
-        } else {
-            fileNameDisplay.textContent = '';
-            fileNameDisplay.classList.remove('text-green-600', 'font-semibold');
         }
+    });
+
+    document.getElementById('upload-widget-btn').onclick = () => {
+        cloudinaryWidget.open();
     };
     
     document.getElementById('privacy-link').onclick = (e) => {
         e.preventDefault();
         openPrivacyModal();
     };
-
+    
+    formContainer.onsubmit = handleSubmit;
     lucide.createIcons();
     chatInputArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
         
 async function handleSubmit(event) {
-    const form = document.getElementById('lead-form');
+    event.preventDefault();
+    const form = event.target;
+    
+    if (!form.fatura_url.value) {
+        alert('Por favor, anexe sua fatura de energia para continuar.');
+        return;
+    }
+    
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
     Object.assign(leadData, data);
     
     clearInputArea();
-    addMessage("Enviando seus dados e anexo...", 'user');
-    
+    addMessage("Enviando seus dados...", 'user');
     showTypingIndicator();
 
     try {
@@ -329,14 +263,12 @@ async function handleSubmit(event) {
             method: 'POST',
             body: formData,
         });
-
         const result = await response.json();
 
         if (result.success) {
             hideTypingIndicator();
             const leadName = leadData.name || leadData.responsavel_nome;
             addMessage(`Perfeito, ${leadName}! Recebi tudo certinho, incluindo o anexo.`);
-            
             showTypingIndicator();
             setTimeout(() => {
                 hideTypingIndicator();
@@ -354,22 +286,18 @@ async function handleSubmit(event) {
     }
 }
 
+// Lógica do Modal de Privacidade
 function openPrivacyModal() {
     privacyModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
-
 function closePrivacyModal() {
     privacyModal.classList.add('hidden');
     document.body.style.overflow = '';
 }
-
 closePrivacyModalBtn.onclick = closePrivacyModal;
 privacyModal.onclick = (e) => {
-    if (e.target === privacyModal) {
-        closePrivacyModal();
-    }
+    if (e.target === privacyModal) closePrivacyModal();
 };
 
 window.onload = startConversation;
-
