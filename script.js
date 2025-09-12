@@ -229,7 +229,7 @@ function showSecureForm() {
     
     const pfFields = `<input name="name" type="text" placeholder="Nome Completo" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><div><input name="cpf" type="text" placeholder="CPF" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><small class="text-xs text-gray-500 px-1">Necessário para vincular a proposta ao titular da conta.</small></div><input name="email" type="email" placeholder="Seu melhor e-mail" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="phone" type="tel" placeholder="Telefone (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">`;
     const pjFields = `<input name="responsavel_nome" type="text" placeholder="Nome Completo do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_cpf" type="text" placeholder="CPF do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_email" type="email" placeholder="E-mail Pessoal do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="empresa_email" type="email" placeholder="E-mail da Empresa" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_telefone" type="tel" placeholder="Telefone Pessoal (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="empresa_telefone" type="tel" placeholder="Telefone da Empresa (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">`;
-    const fileUploadSection = `<div><label class="block text-sm font-medium text-gray-700 mb-1">Anexe sua última fatura de energia:</label><div class="grid grid-cols-2 gap-2"><button type="button" id="upload-widget-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive"><i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Anexar Fatura</span></button></div><p id="file-name-display" class="text-xs text-gray-500 mt-2 text-center"></p></div>`;
+    const fileUploadSection = `<div><label class="block text-sm font-medium text-gray-700 mb-1">Anexe sua última fatura de energia:</label><button type="button" id="upload-widget-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive"><i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Anexar Fatura</span></button><p id="file-name-display" class="text-xs text-gray-500 mt-2 text-center"></p></div>`;
 
     formContainer.innerHTML = `
         <input type="hidden" name="access_key" value="4ee5d80b-0860-4b79-a30d-5c0392c46ff4">
@@ -249,8 +249,16 @@ function showSecureForm() {
         language: 'pt',
         text: { "pt": { "or_drag_a_file_here": "ou arraste o arquivo aqui" } }
     }, (error, result) => { 
-        if (!error && result && result.event === "success") { 
-            document.getElementById('fatura-url').value = result.info.secure_url;
+        if (!error && result && result.event === "success") {
+            // --- INÍCIO DA CORREÇÃO ---
+            let finalUrl = result.info.secure_url;
+            // Garante que arquivos não-imagem (como PDF) usem o endpoint 'raw' para download direto.
+            if (result.info.resource_type === 'raw' || !['jpg', 'jpeg', 'png', 'gif'].includes(result.info.format)) {
+                finalUrl = finalUrl.replace('/image/upload', '/raw/upload');
+            }
+            // --- FIM DA CORREÇÃO ---
+
+            document.getElementById('fatura-url').value = finalUrl; // Usa a URL corrigida
             const fileNameDisplay = document.getElementById('file-name-display');
             fileNameDisplay.textContent = `Arquivo enviado: ${result.info.original_filename}`;
             fileNameDisplay.classList.add('text-green-600', 'font-semibold');
@@ -310,6 +318,7 @@ async function handleSubmit(event) {
     }
 }
 
+// Lógica do Modal de Privacidade
 function openPrivacyModal() {
     privacyModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -324,4 +333,3 @@ privacyModal.onclick = (e) => {
 };
 
 window.onload = startConversation;
-
