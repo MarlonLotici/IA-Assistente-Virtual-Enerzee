@@ -226,7 +226,6 @@ function showSecureForm() {
     const formContainer = document.createElement('form');
     formContainer.id = 'lead-form';
     formContainer.className = 'chat-message space-y-3 p-4 bg-gray-50 rounded-lg border';
-    formContainer.onsubmit = handleSubmit;
     
     const pfFields = `
         <input name="name" type="text" placeholder="Nome Completo" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
@@ -274,9 +273,11 @@ function showSecureForm() {
             <span class="flex items-center gap-1"><i data-lucide="lock" class="w-4 h-4"></i> Ambiente Seguro</span>
             <a href="#" id="privacy-link" class="hover:underline">Política de Privacidade</a>
         </div>
-        <button type="submit" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg btn-interactive">Enviar para Simulação</button>
+        <button type="button" id="submit-btn" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg btn-interactive">Enviar para Simulação</button>
     `;
     chatInputArea.appendChild(formContainer);
+
+    document.getElementById('submit-btn').onclick = handleSubmit;
 
     const faturaInput = document.getElementById('fatura-input');
     const uploadBtn = document.getElementById('upload-btn');
@@ -313,8 +314,7 @@ function showSecureForm() {
 }
         
 async function handleSubmit(event) {
-    event.preventDefault();
-    const form = event.target;
+    const form = document.getElementById('lead-form');
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
     Object.assign(leadData, data);
@@ -344,7 +344,7 @@ async function handleSubmit(event) {
             }, 1200);
         } else {
             hideTypingIndicator();
-            console.error("Erro no envio para Web3Forms:", result);
+            console.error("Erro no envio para Web3Forms:", result.message || result);
             addMessage("Ocorreu um erro ao enviar seus dados. Por favor, tente novamente mais tarde. 😥", 'ia');
         }
     } catch (error) {
@@ -372,3 +372,4 @@ privacyModal.onclick = (e) => {
 };
 
 window.onload = startConversation;
+
