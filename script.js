@@ -242,28 +242,25 @@ function showSecureForm() {
     `;
     chatInputArea.appendChild(formContainer);
     
+    // --- INÍCIO DA CORREÇÃO ---
     const cloudinaryWidget = cloudinary.createUploadWidget({
         cloudName: 'di3ezpmyb', 
         uploadPreset: 'ci0yimyz',
         folder: 'faturas_enerzee',
+        // A linha abaixo é a correção definitiva. Ela força o Cloudinary a detectar o tipo do arquivo.
+        resource_type: "auto", 
         language: 'pt',
         text: { "pt": { "or_drag_a_file_here": "ou arraste o arquivo aqui" } }
     }, (error, result) => { 
-        if (!error && result && result.event === "success") {
-            // --- INÍCIO DA CORREÇÃO ---
-            let finalUrl = result.info.secure_url;
-            // Garante que arquivos não-imagem (como PDF) usem o endpoint 'raw' para download direto.
-            if (result.info.resource_type === 'raw' || !['jpg', 'jpeg', 'png', 'gif'].includes(result.info.format)) {
-                finalUrl = finalUrl.replace('/image/upload', '/raw/upload');
-            }
-            // --- FIM DA CORREÇÃO ---
-
-            document.getElementById('fatura-url').value = finalUrl; // Usa a URL corrigida
+        if (!error && result && result.event === "success") { 
+            // Com a correção acima, a URL já virá correta e não precisamos mais do .replace()
+            document.getElementById('fatura-url').value = result.info.secure_url;
             const fileNameDisplay = document.getElementById('file-name-display');
             fileNameDisplay.textContent = `Arquivo enviado: ${result.info.original_filename}`;
             fileNameDisplay.classList.add('text-green-600', 'font-semibold');
         }
     });
+    // --- FIM DA CORREÇÃO ---
 
     document.getElementById('upload-widget-btn').onclick = () => cloudinaryWidget.open();
     document.getElementById('privacy-link').onclick = (e) => { e.preventDefault(); openPrivacyModal(); };
@@ -333,3 +330,4 @@ privacyModal.onclick = (e) => {
 };
 
 window.onload = startConversation;
+
