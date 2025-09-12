@@ -249,12 +249,20 @@ function showSecureForm() {
         language: 'pt',
         text: { "pt": { "or_drag_a_file_here": "ou arraste o arquivo aqui" } }
     }, (error, result) => { 
-        if (!error && result && result.event === "success") { 
+        if (!error && result && result.event === "success") {
             let finalUrl = result.info.secure_url;
-            // LÓGICA DE CORREÇÃO DA URL
-            if (result.info.resource_type === 'raw' || result.info.format === 'pdf') {
-                finalUrl = finalUrl.replace('/image/upload/', '/raw/upload/');
+            // --- INÍCIO DA CORREÇÃO FINAL ---
+            // Verifica se o arquivo NÃO é uma imagem padrão para forçar o download.
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(result.info.format.toLowerCase());
+            if (!isImage) {
+                // Insere a flag 'fl_attachment' na URL para forçar o download
+                const urlParts = finalUrl.split('/upload/');
+                if (urlParts.length === 2) {
+                    finalUrl = `${urlParts[0]}/upload/fl_attachment/${urlParts[1]}`;
+                }
             }
+            // --- FIM DA CORREÇÃO FINAL ---
+
             document.getElementById('fatura-url').value = finalUrl;
             const fileNameDisplay = document.getElementById('file-name-display');
             fileNameDisplay.textContent = `Arquivo enviado: ${result.info.original_filename}`;
