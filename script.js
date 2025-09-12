@@ -12,7 +12,6 @@ const closePrivacyModalBtn = document.getElementById('close-privacy-modal');
 
 let leadData = { type: null };
 
-// --- LÓGICA DO CHAT (SEM ALTERAÇÕES) ---
 function updateProgress(percentage, activeLabel) {
     progressBar.style.width = `${percentage}%`;
     Object.values(progressLabels).forEach(label => label.classList.remove('font-bold', 'text-green-600'));
@@ -20,41 +19,57 @@ function updateProgress(percentage, activeLabel) {
         progressLabels[activeLabel].classList.add('font-bold', 'text-green-600');
     }
 }
+
 function addMessage(text, sender = 'ia', isHtml = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
     const bubble = document.createElement('div');
-    if (isHtml) bubble.innerHTML = text;
-    else bubble.textContent = text;
+    if (isHtml) {
+        bubble.innerHTML = text;
+    } else {
+        bubble.textContent = text;
+    }
     bubble.className = `max-w-xs md:max-w-md p-3 rounded-2xl shadow-sm ${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`;
     messageDiv.appendChild(bubble);
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     lucide.createIcons();
 }
+
 function showTypingIndicator() {
     const indicator = document.createElement('div');
     indicator.id = 'typing-indicator';
     indicator.className = 'chat-message flex justify-start';
-    indicator.innerHTML = `<div class="bg-gray-200 p-3 rounded-2xl shadow-sm"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+    indicator.innerHTML = `
+        <div class="bg-gray-200 p-3 rounded-2xl shadow-sm">
+            <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+    `;
     chatMessages.appendChild(indicator);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 function hideTypingIndicator() {
     const indicator = document.getElementById('typing-indicator');
-    if (indicator) indicator.remove();
+    if (indicator) {
+        indicator.remove();
+    }
 }
+
 function clearInputArea() {
     chatInputArea.innerHTML = '';
 }
 
-// --- FLUXO DA CONVERSA ---
 function startConversation() {
     updateProgress(10, 'calculo');
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-        addMessage("Olá! 👋 Sou o assistente virtual da Enerzee. Vamos descobrir em 30 segundos quanto você pode economizar na sua conta de luz?");
+        addMessage("Olá! 👋 Sou o assistente virtual do Consultor Marlon da Enerzee. Vamos descobrir em 30 segundos quanto você pode economizar na sua conta de luz?");
         showTypingIndicator();
         setTimeout(() => {
             hideTypingIndicator();
@@ -69,7 +84,7 @@ function showCalculatorInput() {
     form.className = 'flex gap-2 chat-message';
     form.onsubmit = handleCalculation;
     form.innerHTML = `
-        <input type="number" id="billValue" placeholder="Ex: 350,00" required class="flex-grow p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" min="1" step="0.01">
+        <input type="number" id="billValue" placeholder="Ex: 350,00" required class="flex-1 w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" min="1" step="0.01">
         <button type="submit" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive flex-shrink-0">Calcular</button>
     `;
     chatInputArea.appendChild(form);
@@ -81,6 +96,7 @@ function handleCalculation(event) {
     const billValue = parseFloat(document.getElementById('billValue').value);
     addMessage(`R$ ${billValue.toFixed(2).replace('.', ',')}`, 'user');
     clearInputArea();
+    
     const SAVING_PERCENTAGE = 0.15;
     const monthlySaving = billValue * SAVING_PERCENTAGE;
     const semestralSaving = monthlySaving * 6;
@@ -90,7 +106,14 @@ function handleCalculation(event) {
     setTimeout(() => {
         hideTypingIndicator();
         updateProgress(33, 'calculo');
-        const resultText = `<p class="font-semibold">Excelente! Com base nesse valor, seu potencial de economia é de:</p><ul class="list-none mt-2 space-y-1"><li><strong>Mensal:</strong> <span class="font-bold text-green-600">R$ ${monthlySaving.toFixed(2).replace('.', ',')}</span></li><li><strong>Semestral:</strong> <span class="font-bold text-green-600">R$ ${semestralSaving.toFixed(2).replace('.', ',')}</span></li><li><strong>Anual:</strong> <span class="font-bold text-green-600">R$ ${annualSaving.toFixed(2).replace('.', ',')}</span></li></ul>`;
+        const resultText = `
+            <p class="font-semibold">Excelente! Com base nesse valor, seu potencial de economia é de:</p>
+            <ul class="list-none mt-2 space-y-1">
+                <li><strong>Mensal:</strong> <span class="font-bold text-green-600">R$ ${monthlySaving.toFixed(2).replace('.', ',')}</span></li>
+                <li><strong>Semestral:</strong> <span class="font-bold text-green-600">R$ ${semestralSaving.toFixed(2).replace('.', ',')}</span></li>
+                <li><strong>Anual:</strong> <span class="font-bold text-green-600">R$ ${annualSaving.toFixed(2).replace('.', ',')}</span></li>
+            </ul>
+        `;
         addMessage(resultText, 'ia', true);
         showTypingIndicator();
         setTimeout(() => {
@@ -103,11 +126,11 @@ function handleCalculation(event) {
 
 function showImpactButton() {
     const button = document.createElement('button');
-    button.innerHTML = 'Ver meu impacto <i data-lucide="arrow-right" class="inline w-4 h-4 ml-1"></i>';
+    button.innerHTML = 'Descobrir meu impacto ambiental<i data-lucide="arrow-right" class="inline w-4 h-4 ml-1"></i>';
     button.className = 'w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive chat-message flex items-center justify-center';
     button.onclick = () => {
         clearInputArea();
-        addMessage("Ver meu impacto", 'user');
+        addMessage("Descobrir meu impacto ambiental", 'user');
         showTypingIndicator();
         setTimeout(showImpactMessage, 800);
     };
@@ -118,11 +141,21 @@ function showImpactButton() {
 function showImpactMessage() {
     hideTypingIndicator();
     updateProgress(66, 'impacto');
-    addMessage("E o melhor: essa economia vem de uma fonte 100% limpa. Ao se juntar à Enerzee, você não está apenas aliviando o bolso, <strong>está assumindo um papel fundamental na regeneração do nosso planeta.</strong>", 'ia', true);
+    addMessage("Essa economia vem de uma fonte 100% limpa. Ao se juntar à Enerzee, você não está apenas aliviando o bolso, <strong>está assumindo um papel fundamental na regeneração do nosso planeta.</strong>", 'ia', true);
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-         const impactText = `<div class="impact-card p-3 rounded-lg"><div class="flex items-center gap-3"><i data-lucide="leaf" class="w-8 h-8 text-green-600 flex-shrink-0"></i><div><p class="font-bold text-gray-800">Você se junta a uma comunidade com +1.000 pessoas!</p><p class="text-sm text-gray-600">Juntas, já evitamos a emissão de 960 toneladas de CO₂, o mesmo que plantar +43.000 árvores ou tirar +560 carros das ruas! 🚗🌳</p></div></div></div>`;
+         const impactText = `
+            <div class="impact-card p-3 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="leaf" class="w-8 h-8 text-green-600 flex-shrink-0"></i>
+                    <div>
+                        <p class="font-bold text-gray-800">Você se junta a uma comunidade com +1.000 pessoas!</p>
+                        <p class="text-sm text-gray-600">Juntas, já evitamos a emissão de 960 toneladas de CO₂, o mesmo que plantar +43.000 árvores ou tirar +560 carros das ruas! 🚗🌳</p>
+                    </div>
+                </div>
+            </div>
+        `;
         addMessage(impactText, 'ia', true);
         showTypingIndicator();
         setTimeout(() => {
@@ -155,7 +188,10 @@ function bridgeToFormalProposal() {
         addMessage("Para qual tipo de imóvel seria a simulação?");
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'flex gap-2 mt-2 chat-message';
-        buttonContainer.innerHTML = `<button onclick="handleLeadType('pf')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Residência</button><button onclick="handleLeadType('pj')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Empresa</button>`;
+        buttonContainer.innerHTML = `
+            <button onclick="handleLeadType('pf')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Residência</button>
+            <button onclick="handleLeadType('pj')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Empresa</button>
+        `;
         chatInputArea.appendChild(buttonContainer);
     }, 1500);
 }
@@ -186,8 +222,6 @@ function showProceedButton() {
     chatInputArea.appendChild(button);
 }
 
-// --- NOVA LÓGICA DE FORMULÁRIO E UPLOAD ---
-
 function showSecureForm() {
     const formContainer = document.createElement('form');
     formContainer.id = 'lead-form';
@@ -196,8 +230,7 @@ function showSecureForm() {
     const pfFields = `<input name="name" type="text" placeholder="Nome Completo" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><div><input name="cpf" type="text" placeholder="CPF" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><small class="text-xs text-gray-500 px-1">Necessário para vincular a proposta ao titular da conta.</small></div><input name="email" type="email" placeholder="Seu melhor e-mail" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="phone" type="tel" placeholder="Telefone (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">`;
     const pjFields = `<input name="responsavel_nome" type="text" placeholder="Nome Completo do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_cpf" type="text" placeholder="CPF do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_email" type="email" placeholder="E-mail Pessoal do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="empresa_email" type="email" placeholder="E-mail da Empresa" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_telefone" type="tel" placeholder="Telefone Pessoal (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="empresa_telefone" type="tel" placeholder="Telefone da Empresa (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">`;
 
-    // Botão de upload é criado aqui, mas a lógica de clique é adicionada depois
-    const fileUploadSection = `<div><label class="block text-sm font-medium text-gray-700 mb-1">Anexe sua última fatura de energia:</label><button type="button" id="upload-widget-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive"><i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Anexar Fatura</span></button><p id="file-name-display" class="text-xs text-gray-500 mt-2 text-center"></p></div>`;
+    const fileUploadSection = `<div><label class="block text-sm font-medium text-gray-700 mb-1">Anexe sua última fatura de energia:</label><div class="grid grid-cols-2 gap-2"><button type="button" id="upload-widget-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive"><i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Anexar Fatura</span></button></div><p id="file-name-display" class="text-xs text-gray-500 mt-2 text-center"></p></div>`;
 
     formContainer.innerHTML = `
         <input type="hidden" name="access_key" value="SUA_CHAVE_DE_ACESSO_AQUI">
@@ -210,7 +243,6 @@ function showSecureForm() {
     `;
     chatInputArea.appendChild(formContainer);
     
-    // Configura o widget do Cloudinary
     const cloudinaryWidget = cloudinary.createUploadWidget({
         cloudName: 'di3ezpmyb', 
         uploadPreset: 'ci0yimyz',
@@ -219,7 +251,6 @@ function showSecureForm() {
         text: { "pt": { "or_drag_a_file_here": "ou arraste o arquivo aqui" } }
     }, (error, result) => { 
         if (!error && result && result.event === "success") { 
-            console.log('Upload concluído: ', result.info);
             document.getElementById('fatura-url').value = result.info.secure_url;
             const fileNameDisplay = document.getElementById('file-name-display');
             fileNameDisplay.textContent = `Arquivo enviado: ${result.info.original_filename}`;
@@ -227,14 +258,8 @@ function showSecureForm() {
         }
     });
 
-    document.getElementById('upload-widget-btn').onclick = () => {
-        cloudinaryWidget.open();
-    };
-    
-    document.getElementById('privacy-link').onclick = (e) => {
-        e.preventDefault();
-        openPrivacyModal();
-    };
+    document.getElementById('upload-widget-btn').onclick = () => cloudinaryWidget.open();
+    document.getElementById('privacy-link').onclick = (e) => { e.preventDefault(); openPrivacyModal(); };
     
     formContainer.onsubmit = handleSubmit;
     lucide.createIcons();
@@ -286,7 +311,6 @@ async function handleSubmit(event) {
     }
 }
 
-// Lógica do Modal de Privacidade
 function openPrivacyModal() {
     privacyModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';

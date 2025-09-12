@@ -5,13 +5,16 @@ body {
 #app-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    /* Alteração Chave: Altura mínima para ocupar a tela, mas automática para poder crescer */
+    min-height: 100vh;
+    height: auto;
 }
 
 #chat-container { 
     flex-grow: 1; 
     display: flex; 
     flex-direction: column; 
+    overflow-y: auto;
 }
 
 .chat-message { 
@@ -66,15 +69,13 @@ body {
 
 @media (max-width: 640px) {
     .main-container {
+        /* As regras de min-height já estão aplicadas globalmente, mas garantimos aqui */
         min-height: 100vh;
         height: auto;
         max-height: none;
         margin: 0;
         border-radius: 0;
         box-shadow: none;
-    }
-    #app-container {
-        height: auto;
     }
     header h1 {
         font-size: 1.25rem;
