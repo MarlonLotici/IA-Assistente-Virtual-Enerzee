@@ -253,7 +253,7 @@ function showSecureForm() {
         text: { "pt": { "or_drag_a_file_here": "ou arraste o arquivo aqui" } }
     }, (error, result) => { 
         if (!error && result && result.event === "success") { 
-            // Com a correção acima, a URL já virá correta e não precisamos mais do .replace()
+            // Com a correção acima, a URL já virá correta e não precisamos mais de lógica extra.
             document.getElementById('fatura-url').value = result.info.secure_url;
             const fileNameDisplay = document.getElementById('file-name-display');
             fileNameDisplay.textContent = `Arquivo enviado: ${result.info.original_filename}`;
