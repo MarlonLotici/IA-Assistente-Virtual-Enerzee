@@ -263,7 +263,7 @@ function showSecureForm() {
     const fileUploadSection = `<div><label class="block text-sm font-medium text-gray-700 mb-1">Anexe sua última fatura de energia:</label><div class="grid grid-cols-2 gap-2"><button type="button" id="upload-widget-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive"><i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Anexar Fatura</span></button></div><p id="file-name-display" class="text-xs text-gray-500 mt-2 text-center"></p></div>`;
 
     formContainer.innerHTML = `
-        <input type="hidden" name="access_key" value="SUA_CHAVE_DE_ACESSO_AQUI">
+        <input type="hidden" name="access_key" value="4ee5d80b-0860-4b79-a30d-5c0392c46ff4">
         <input type="hidden" name="subject" value="Novo Lead para Simulação Enerzee!">
         <input type="hidden" id="fatura-url" name="fatura_url" value="">
         ${leadData.type === 'pf' ? pfFields : pjFields}
