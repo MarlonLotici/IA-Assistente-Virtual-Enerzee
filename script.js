@@ -12,6 +12,16 @@ const closePrivacyModalBtn = document.getElementById('close-privacy-modal');
 
 let leadData = { type: null };
 
+// --- NOVA FUNÇÃO DE ROLAGEM ---
+function scrollToBottom() {
+    setTimeout(() => {
+        chatMessages.scrollTo({
+            top: chatMessages.scrollHeight,
+            behavior: 'smooth'
+        });
+    }, 100); // Pequeno delay para garantir que o DOM foi atualizado
+}
+
 function updateProgress(percentage, activeLabel) {
     progressBar.style.width = `${percentage}%`;
     Object.values(progressLabels).forEach(label => label.classList.remove('font-bold', 'text-green-600'));
@@ -32,7 +42,7 @@ function addMessage(text, sender = 'ia', isHtml = false) {
     bubble.className = `max-w-xs md:max-w-md p-3 rounded-2xl shadow-sm ${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`;
     messageDiv.appendChild(bubble);
     chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    scrollToBottom(); // <-- Adicionado aqui
     lucide.createIcons();
 }
 
@@ -50,7 +60,7 @@ function showTypingIndicator() {
         </div>
     `;
     chatMessages.appendChild(indicator);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    scrollToBottom(); // <-- Adicionado aqui
 }
 
 function hideTypingIndicator() {
@@ -88,6 +98,7 @@ function showCalculatorInput() {
         <button type="submit" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive flex-shrink-0">Calcular</button>
     `;
     chatInputArea.appendChild(form);
+    scrollToBottom(); // <-- Adicionado aqui
     document.getElementById('billValue').focus();
 }
 
@@ -135,6 +146,7 @@ function showImpactButton() {
         setTimeout(showImpactMessage, 800);
     };
     chatInputArea.appendChild(button);
+    scrollToBottom(); // <-- Adicionado aqui
     lucide.createIcons();
 }
         
@@ -177,6 +189,7 @@ function showProposalButton() {
         setTimeout(bridgeToFormalProposal, 800);
     };
     chatInputArea.appendChild(button);
+    scrollToBottom(); // <-- Adicionado aqui
 }
 
 function bridgeToFormalProposal() {
@@ -193,6 +206,7 @@ function bridgeToFormalProposal() {
             <button onclick="handleLeadType('pj')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Empresa</button>
         `;
         chatInputArea.appendChild(buttonContainer);
+        scrollToBottom(); // <-- Adicionado aqui
     }, 1500);
 }
 
@@ -220,6 +234,7 @@ function showProceedButton() {
         setTimeout(showSecureForm, 500);
     };
     chatInputArea.appendChild(button);
+    scrollToBottom(); // <-- Adicionado aqui
 }
 
 function showSecureForm() {
@@ -229,10 +244,10 @@ function showSecureForm() {
     
     const pfFields = `<input name="name" type="text" placeholder="Nome Completo" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><div><input name="cpf" type="text" placeholder="CPF" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><small class="text-xs text-gray-500 px-1">Necessário para vincular a proposta ao titular da conta.</small></div><input name="email" type="email" placeholder="Seu melhor e-mail" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="phone" type="tel" placeholder="Telefone (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">`;
     const pjFields = `<input name="responsavel_nome" type="text" placeholder="Nome Completo do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_cpf" type="text" placeholder="CPF do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_email" type="email" placeholder="E-mail Pessoal do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="empresa_email" type="email" placeholder="E-mail da Empresa" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_telefone" type="tel" placeholder="Telefone Pessoal (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="empresa_telefone" type="tel" placeholder="Telefone da Empresa (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">`;
-    const fileUploadSection = `<div><label class="block text-sm font-medium text-gray-700 mb-1">Anexe sua última fatura de energia:</label><button type="button" id="upload-widget-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive"><i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Anexar Fatura</span></button><p id="file-name-display" class="text-xs text-gray-500 mt-2 text-center"></p></div>`;
+    const fileUploadSection = `<div><label class="block text-sm font-medium text-gray-700 mb-1">Anexe sua última fatura de energia:</label><div class="grid grid-cols-2 gap-2"><button type="button" id="upload-widget-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive"><i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Anexar Fatura</span></button></div><p id="file-name-display" class="text-xs text-gray-500 mt-2 text-center"></p></div>`;
 
     formContainer.innerHTML = `
-        <input type="hidden" name="access_key" value="4ee5d80b-0860-4b79-a30d-5c0392c46ff4">
+        <input type="hidden" name="access_key" value="SUA_CHAVE_DE_ACESSO_AQUI">
         <input type="hidden" name="subject" value="Novo Lead para Simulação Enerzee!">
         <input type="hidden" id="fatura-url" name="fatura_url" value="">
         ${leadData.type === 'pf' ? pfFields : pjFields}
@@ -251,18 +266,13 @@ function showSecureForm() {
     }, (error, result) => { 
         if (!error && result && result.event === "success") {
             let finalUrl = result.info.secure_url;
-            // --- INÍCIO DA CORREÇÃO FINAL ---
-            // Verifica se o arquivo NÃO é uma imagem padrão para forçar o download.
             const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(result.info.format.toLowerCase());
             if (!isImage) {
-                // Insere a flag 'fl_attachment' na URL para forçar o download
                 const urlParts = finalUrl.split('/upload/');
                 if (urlParts.length === 2) {
                     finalUrl = `${urlParts[0]}/upload/fl_attachment/${urlParts[1]}`;
                 }
             }
-            // --- FIM DA CORREÇÃO FINAL ---
-
             document.getElementById('fatura-url').value = finalUrl;
             const fileNameDisplay = document.getElementById('file-name-display');
             fileNameDisplay.textContent = `Arquivo enviado: ${result.info.original_filename}`;
@@ -275,7 +285,7 @@ function showSecureForm() {
     
     formContainer.onsubmit = handleSubmit;
     lucide.createIcons();
-    chatInputArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    scrollToBottom(); // <-- Adicionado aqui
 }
         
 async function handleSubmit(event) {
@@ -323,7 +333,6 @@ async function handleSubmit(event) {
     }
 }
 
-// Lógica do Modal de Privacidade
 function openPrivacyModal() {
     privacyModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -338,4 +347,3 @@ privacyModal.onclick = (e) => {
 };
 
 window.onload = startConversation;
-
