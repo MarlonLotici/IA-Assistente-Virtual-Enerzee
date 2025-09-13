@@ -1,3 +1,4 @@
+// --- CONSTANTES DO DOM ---
 const chatMessages = document.getElementById('chat-messages');
 const chatInputArea = document.getElementById('chat-input-area');
 const progressBar = document.getElementById('progress-bar');
@@ -6,21 +7,36 @@ const progressLabels = {
     impacto: document.getElementById('label-impacto'),
     proposta: document.getElementById('label-proposta'),
 };
-
 const privacyModal = document.getElementById('privacy-modal');
 const closePrivacyModalBtn = document.getElementById('close-privacy-modal');
 
 let leadData = { type: null };
 
-// --- NOVA FUNÇÃO DE ROLAGEM ---
+// --- FUNÇÃO DE ROLAGEM FORÇADA E DEFINITIVA ---
+/**
+ * Esta função força a rolagem para o final em DUAS áreas, cobrindo
+ * tanto o layout de desktop (rolagem interna) quanto o de mobile (rolagem da página).
+ * Ela não é "inteligente", ela é EFICAZ, rolando sempre.
+ */
 function scrollToBottom() {
+    // Usamos um timeout para garantir que o DOM renderizou o novo conteúdo antes de rolar.
     setTimeout(() => {
+        // AÇÃO 1: Rolar o contêiner interno de mensagens até o fim.
+        // Essencial para a visualização em desktop.
         chatMessages.scrollTo({
             top: chatMessages.scrollHeight,
             behavior: 'smooth'
         });
-    }, 100); // Pequeno delay para garantir que o DOM foi atualizado
+
+        // AÇÃO 2: Rolar a janela principal do navegador até o fim.
+        // Essencial para a visualização em mobile, onde a página inteira pode crescer.
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
+    }, 100);
 }
+
 
 function updateProgress(percentage, activeLabel) {
     progressBar.style.width = `${percentage}%`;
@@ -42,7 +58,7 @@ function addMessage(text, sender = 'ia', isHtml = false) {
     bubble.className = `max-w-xs md:max-w-md p-3 rounded-2xl shadow-sm ${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`;
     messageDiv.appendChild(bubble);
     chatMessages.appendChild(messageDiv);
-    scrollToBottom(); // <-- Adicionado aqui
+    scrollToBottom(); // <-- Chama a função de dupla rolagem
     lucide.createIcons();
 }
 
@@ -60,7 +76,7 @@ function showTypingIndicator() {
         </div>
     `;
     chatMessages.appendChild(indicator);
-    scrollToBottom(); // <-- Adicionado aqui
+    scrollToBottom(); // <-- Chama a função de dupla rolagem
 }
 
 function hideTypingIndicator() {
@@ -98,7 +114,7 @@ function showCalculatorInput() {
         <button type="submit" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive flex-shrink-0">Calcular</button>
     `;
     chatInputArea.appendChild(form);
-    scrollToBottom(); // <-- Adicionado aqui
+    scrollToBottom(); // <-- Chama a função de dupla rolagem
     document.getElementById('billValue').focus();
 }
 
@@ -146,7 +162,7 @@ function showImpactButton() {
         setTimeout(showImpactMessage, 800);
     };
     chatInputArea.appendChild(button);
-    scrollToBottom(); // <-- Adicionado aqui
+    scrollToBottom(); // <-- Chama a função de dupla rolagem
     lucide.createIcons();
 }
         
@@ -157,7 +173,7 @@ function showImpactMessage() {
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-         const impactText = `
+        const impactText = `
             <div class="impact-card p-3 rounded-lg">
                 <div class="flex items-center gap-3">
                     <i data-lucide="leaf" class="w-8 h-8 text-green-600 flex-shrink-0"></i>
@@ -189,7 +205,7 @@ function showProposalButton() {
         setTimeout(bridgeToFormalProposal, 800);
     };
     chatInputArea.appendChild(button);
-    scrollToBottom(); // <-- Adicionado aqui
+    scrollToBottom(); // <-- Chama a função de dupla rolagem
 }
 
 function bridgeToFormalProposal() {
@@ -206,7 +222,7 @@ function bridgeToFormalProposal() {
             <button onclick="handleLeadType('pj')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Empresa</button>
         `;
         chatInputArea.appendChild(buttonContainer);
-        scrollToBottom(); // <-- Adicionado aqui
+        scrollToBottom(); // <-- Chama a função de dupla rolagem
     }, 1500);
 }
 
@@ -234,7 +250,7 @@ function showProceedButton() {
         setTimeout(showSecureForm, 500);
     };
     chatInputArea.appendChild(button);
-    scrollToBottom(); // <-- Adicionado aqui
+    scrollToBottom(); // <-- Chama a função de dupla rolagem
 }
 
 function showSecureForm() {
@@ -285,7 +301,7 @@ function showSecureForm() {
     
     formContainer.onsubmit = handleSubmit;
     lucide.createIcons();
-    scrollToBottom(); // <-- Adicionado aqui
+    scrollToBottom(); // <-- Chama a função de dupla rolagem
 }
         
 async function handleSubmit(event) {
