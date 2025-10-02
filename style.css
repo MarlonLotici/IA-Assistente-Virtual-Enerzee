@@ -2,6 +2,12 @@ body {
     font-family: 'Poppins', sans-serif; 
 }
 
+header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
 #app-container {
     display: flex;
     flex-direction: column;
@@ -47,7 +53,6 @@ body {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* --- NOVO EFEITO DE BOTÃO PULSANTE --- */
 .btn-pulsing {
     animation: pulse 2s infinite;
 }
@@ -58,15 +63,32 @@ body {
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
     50% {
-        transform: scale(1.03);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); 
     }
     100% {
         transform: scale(1);
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 }
-/* ------------------------------------ */
+
+.form-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.spinner {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    width: 1.25rem;
+    height: 1.25rem;
+    animation: spin 1s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 
 .typing-indicator { 
     display: flex; 
