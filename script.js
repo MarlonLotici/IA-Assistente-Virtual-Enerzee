@@ -10,33 +10,17 @@ const progressLabels = {
 const privacyModal = document.getElementById('privacy-modal');
 const closePrivacyModalBtn = document.getElementById('close-privacy-modal');
 
-let leadData = { type: null };
+// ALTERAÇÃO: 'billValue' foi adicionado para guardar o valor da fatura.
+let leadData = { type: null, billValue: 0 };
 
-// --- FUNÇÃO DE ROLAGEM FORÇADA E DEFINITIVA ---
-/**
- * Esta função força a rolagem para o final em DUAS áreas, cobrindo
- * tanto o layout de desktop (rolagem interna) quanto o de mobile (rolagem da página).
- * Ela não é "inteligente", ela é EFICAZ, rolando sempre.
- */
+// --- FUNÇÕES DE CHAT E ESTRUTURA (sem alterações) ---
+
 function scrollToBottom() {
-    // Usamos um timeout para garantir que o DOM renderizou o novo conteúdo antes de rolar.
     setTimeout(() => {
-        // AÇÃO 1: Rolar o contêiner interno de mensagens até o fim.
-        // Essencial para a visualização em desktop.
-        chatMessages.scrollTo({
-            top: chatMessages.scrollHeight,
-            behavior: 'smooth'
-        });
-
-        // AÇÃO 2: Rolar a janela principal do navegador até o fim.
-        // Essencial para a visualização em mobile, onde a página inteira pode crescer.
-        window.scrollTo({
-            top: document.body.scrollHeight,
-            behavior: 'smooth'
-        });
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }, 100);
 }
-
 
 function updateProgress(percentage, activeLabel) {
     progressBar.style.width = `${percentage}%`;
@@ -55,10 +39,10 @@ function addMessage(text, sender = 'ia', isHtml = false) {
     } else {
         bubble.textContent = text;
     }
-    bubble.className = `max-w-xs md:max-w-md p-3 rounded-2xl shadow-sm ${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`;
+    bubble.className = `max-w-xs md:max-w-md p-3 rounded-2xl shadow-sm ${sender === 'user' ? 'bg-sky-500 text-white' : 'bg-gray-200 text-gray-800'}`;
     messageDiv.appendChild(bubble);
     chatMessages.appendChild(messageDiv);
-    scrollToBottom(); // <-- Chama a função de dupla rolagem
+    scrollToBottom();
     lucide.createIcons();
 }
 
@@ -66,43 +50,35 @@ function showTypingIndicator() {
     const indicator = document.createElement('div');
     indicator.id = 'typing-indicator';
     indicator.className = 'chat-message flex justify-start';
-    indicator.innerHTML = `
-        <div class="bg-gray-200 p-3 rounded-2xl shadow-sm">
-            <div class="typing-indicator">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            </div>
-        </div>
-    `;
+    indicator.innerHTML = `<div class="bg-gray-200 p-3 rounded-2xl shadow-sm"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
     chatMessages.appendChild(indicator);
-    scrollToBottom(); // <-- Chama a função de dupla rolagem
+    scrollToBottom();
 }
 
 function hideTypingIndicator() {
     const indicator = document.getElementById('typing-indicator');
-    if (indicator) {
-        indicator.remove();
-    }
+    if (indicator) indicator.remove();
 }
 
 function clearInputArea() {
     chatInputArea.innerHTML = '';
 }
 
+// --- FLUXO DE ALTA CONVERSÃO (Simplificado) ---
+
 function startConversation() {
     updateProgress(10, 'calculo');
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-        addMessage("Olá! 👋 Sou o assistente virtual do Consultor Marlon da Enerzee. Vamos descobrir em 30 segundos quanto você pode economizar na sua conta de luz?");
+        addMessage("Olá! 👋 Sou o assistente virtual da Enerzee, treinado pelo consultor Marlon para te ajudar a descobrir seu potencial de economia de forma rápida e segura.");
         showTypingIndicator();
         setTimeout(() => {
             hideTypingIndicator();
-            addMessage("Para começar, me diga qual o valor médio da sua fatura. É 100% gratuito e sem compromisso.");
+            addMessage("Vamos começar? Me diga qual o valor médio da sua fatura de energia. É 100% gratuito e sem compromisso.");
             showCalculatorInput();
-        }, 1200);
-    }, 500);
+        }, 1500);
+    }, 800);
 }
 
 function showCalculatorInput() {
@@ -111,41 +87,35 @@ function showCalculatorInput() {
     form.onsubmit = handleCalculation;
     form.innerHTML = `
         <input type="number" id="billValue" placeholder="Ex: 350,00" required class="flex-1 w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" min="1" step="0.01">
-        <button type="submit" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive flex-shrink-0">Calcular</button>
+        <button type="submit" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive btn-pulsing flex-shrink-0">Calcular</button>
     `;
     chatInputArea.appendChild(form);
-    scrollToBottom(); // <-- Chama a função de dupla rolagem
     document.getElementById('billValue').focus();
+    scrollToBottom();
 }
 
 function handleCalculation(event) {
     event.preventDefault();
     const billValue = parseFloat(document.getElementById('billValue').value);
+    
+    // ALTERAÇÃO: Guardando o valor da fatura para enviar no formulário depois.
+    leadData.billValue = billValue;
+
     addMessage(`R$ ${billValue.toFixed(2).replace('.', ',')}`, 'user');
     clearInputArea();
     
-    const SAVING_PERCENTAGE = 0.15;
-    const monthlySaving = billValue * SAVING_PERCENTAGE;
-    const semestralSaving = monthlySaving * 6;
+    const monthlySaving = billValue * 0.15;
     const annualSaving = monthlySaving * 12;
 
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
         updateProgress(33, 'calculo');
-        const resultText = `
-            <p class="font-semibold">Excelente! Com base nesse valor, seu potencial de economia é de:</p>
-            <ul class="list-none mt-2 space-y-1">
-                <li><strong>Mensal:</strong> <span class="font-bold text-green-600">R$ ${monthlySaving.toFixed(2).replace('.', ',')}</span></li>
-                <li><strong>Semestral:</strong> <span class="font-bold text-green-600">R$ ${semestralSaving.toFixed(2).replace('.', ',')}</span></li>
-                <li><strong>Anual:</strong> <span class="font-bold text-green-600">R$ ${annualSaving.toFixed(2).replace('.', ',')}</span></li>
-            </ul>
-        `;
+        const resultText = `<p class="font-semibold">Excelente! Com base nesse valor, seu potencial de economia é de até:</p><ul class="list-none mt-2 space-y-1"><li><strong>Mensal:</strong> <span class="font-bold text-green-600">R$ ${monthlySaving.toFixed(2).replace('.', ',')}</span></li><li><strong>Anual:</strong> <span class="font-bold text-green-600">R$ ${annualSaving.toFixed(2).replace('.', ',')}</span></li></ul>`;
         addMessage(resultText, 'ia', true);
-        showTypingIndicator();
+        
         setTimeout(() => {
-            hideTypingIndicator();
-            addMessage("<p class='text-xs'>Lembrando que essa economia é aplicada sobre seu consumo de energia. Taxas de iluminação pública e outros encargos da distribuidora não entram no cálculo.</p>", 'ia', true);
+            addMessage("<p class='text-xs'>Lembrando que a economia é sobre seu consumo. Taxas e outros encargos não entram no cálculo.</p>", 'ia', true);
             setTimeout(showImpactButton, 1500);
         }, 1200);
     }, 800);
@@ -153,42 +123,28 @@ function handleCalculation(event) {
 
 function showImpactButton() {
     const button = document.createElement('button');
-    button.innerHTML = 'Descobrir meu impacto ambiental<i data-lucide="arrow-right" class="inline w-4 h-4 ml-1"></i>';
-    button.className = 'w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive chat-message flex items-center justify-center';
+    button.innerHTML = 'Ver o impacto positivo disso <i data-lucide="arrow-right" class="inline w-4 h-4 ml-1"></i>';
+    button.className = 'w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive btn-pulsing chat-message flex items-center justify-center';
     button.onclick = () => {
         clearInputArea();
-        addMessage("Descobrir meu impacto ambiental", 'user');
-        showTypingIndicator();
+        addMessage("Ver o impacto positivo disso", 'user');
         setTimeout(showImpactMessage, 800);
     };
     chatInputArea.appendChild(button);
-    scrollToBottom(); // <-- Chama a função de dupla rolagem
     lucide.createIcons();
+    scrollToBottom();
 }
-        
+    
 function showImpactMessage() {
     hideTypingIndicator();
     updateProgress(66, 'impacto');
-    addMessage("Essa economia vem de uma fonte 100% limpa. Ao se juntar à Enerzee, você não está apenas aliviando o bolso, <strong>está assumindo um papel fundamental na regeneração do nosso planeta.</strong>", 'ia', true);
-    showTypingIndicator();
+    addMessage("Além de economizar, você passa a consumir energia 100% limpa, assumindo um papel fundamental na regeneração do nosso planeta.", 'ia', true);
     setTimeout(() => {
-        hideTypingIndicator();
-        const impactText = `
-            <div class="impact-card p-3 rounded-lg">
-                <div class="flex items-center gap-3">
-                    <i data-lucide="leaf" class="w-8 h-8 text-green-600 flex-shrink-0"></i>
-                    <div>
-                        <p class="font-bold text-gray-800">Você se junta a uma comunidade com +1.000 pessoas!</p>
-                        <p class="text-sm text-gray-600">Juntas, já evitamos a emissão de 960 toneladas de CO₂, o mesmo que plantar +43.000 árvores ou tirar +560 carros das ruas! 🚗🌳</p>
-                    </div>
-                </div>
-            </div>
-        `;
+        const impactText = `<div class="impact-card p-3 rounded-lg"><div class="flex items-center gap-3"><i data-lucide="leaf" class="w-8 h-8 text-green-600 flex-shrink-0"></i><div><p class="font-bold text-gray-800">Você se junta a uma comunidade com +1.000 pessoas!</p><p class="text-sm text-gray-600">Juntas, já evitamos a emissão de 960 toneladas de CO₂, o mesmo que plantar +43.000 árvores! 🌳</p></div></div></div>`;
         addMessage(impactText, 'ia', true);
-        showTypingIndicator();
         setTimeout(() => {
             hideTypingIndicator();
-            addMessage("Impressionante, não é? Pequenas escolhas geram grandes mudanças.");
+            addMessage("Essa é a força da nossa comunidade. Agora, vamos cuidar da sua economia.");
             setTimeout(showProposalButton, 1500);
         }, 1500);
     }, 1200);
@@ -196,33 +152,30 @@ function showImpactMessage() {
 
 function showProposalButton() {
     const button = document.createElement('button');
-    button.textContent = 'Gostei, quero a simulação!';
-    button.className = 'w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive chat-message';
+    button.textContent = 'Sim, quero garantir meu desconto!'; 
+    button.className = 'w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg btn-interactive btn-pulsing chat-message';
     button.onclick = () => {
         clearInputArea();
-        addMessage("Gostei, quero a simulação!", 'user');
-        showTypingIndicator();
+        addMessage("Sim, quero garantir meu desconto!", 'user');
         setTimeout(bridgeToFormalProposal, 800);
     };
     chatInputArea.appendChild(button);
-    scrollToBottom(); // <-- Chama a função de dupla rolagem
+    scrollToBottom();
 }
 
 function bridgeToFormalProposal() {
-    hideTypingIndicator();
-    addMessage("Excelente decisão! 😄 Para transformarmos esse potencial em uma simulação real e <strong>garantir seu desconto</strong>, o próximo passo é analisar sua fatura.", 'ia', true);
-    showTypingIndicator();
+    // ALTERAÇÃO: Mensagem ajustada, pois não vamos mais analisar a fatura.
+    addMessage("Excelente decisão! 😄 Para receber uma proposta personalizada com base na sua média de consumo, basta preencher os dados abaixo.");
     setTimeout(() => {
-        hideTypingIndicator();
         addMessage("Para qual tipo de imóvel seria a simulação?");
         const buttonContainer = document.createElement('div');
-        buttonContainer.className = 'flex gap-2 mt-2 chat-message';
+        buttonContainer.className = 'flex gap-2 mt-2 chat-message w-full';
         buttonContainer.innerHTML = `
-            <button onclick="handleLeadType('pf')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Residência</button>
-            <button onclick="handleLeadType('pj')" class="flex-1 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Empresa</button>
+            <button onclick="handleLeadType('pf')" class="flex-1 bg-sky-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Residência</button>
+            <button onclick="handleLeadType('pj')" class="flex-1 bg-sky-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive">Empresa</button>
         `;
         chatInputArea.appendChild(buttonContainer);
-        scrollToBottom(); // <-- Chama a função de dupla rolagem
+        scrollToBottom();
     }, 1500);
 }
 
@@ -232,94 +185,69 @@ function handleLeadType(type) {
     addMessage(userResponse, 'user');
     clearInputArea();
     updateProgress(100, 'proposta');
-    showTypingIndicator();
     setTimeout(() => {
-        hideTypingIndicator();
-        addMessage("Ótimo. Para preparar sua simulação personalizada, preciso que preencha os campos abaixo. <strong>Fique tranquilo(a), seus dados são protegidos pela LGPD e usados exclusivamente para essa finalidade.</strong>", 'ia', true);
-        setTimeout(showProceedButton, 1800);
+        addMessage("Ótimo! Por favor, preencha os campos abaixo para que um especialista entre em contato. É rápido e seguro.", 'ia', true);
+        // ALTERAÇÃO: Chamando o novo formulário de passo único.
+        setTimeout(showSecureForm, 1800);
     }, 500);
 }
 
-function showProceedButton() {
-    const button = document.createElement('button');
-    button.textContent = 'Preencher Dados';
-    button.className = 'w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-interactive chat-message';
-    button.onclick = () => {
-        clearInputArea();
-        addMessage("Preencher Dados", 'user');
-        setTimeout(showSecureForm, 500);
-    };
-    chatInputArea.appendChild(button);
-    scrollToBottom(); // <-- Chama a função de dupla rolagem
-}
-
+// --- ALTERAÇÃO GERAL: NOVO FORMULÁRIO DE PASSO ÚNICO ---
 function showSecureForm() {
     const formContainer = document.createElement('form');
     formContainer.id = 'lead-form';
-    formContainer.className = 'chat-message space-y-3 p-4 bg-gray-50 rounded-lg border';
+    formContainer.className = 'chat-message space-y-3 p-4 bg-gray-50 rounded-lg border w-full'; 
+    formContainer.onsubmit = handleSubmit;
+
+    // Campos para Pessoa Física (Residência)
+    const pfFields = `
+        <input name="nome_completo" type="text" placeholder="Nome Completo" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
+        <input name="email" type="email" placeholder="Seu melhor e-mail" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
+        <input name="telefone" type="tel" placeholder="Telefone (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
+    `;
     
-    const pfFields = `<input name="name" type="text" placeholder="Nome Completo" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><div><input name="cpf" type="text" placeholder="CPF" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><small class="text-xs text-gray-500 px-1">Necessário para vincular a proposta ao titular da conta.</small></div><input name="email" type="email" placeholder="Seu melhor e-mail" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="phone" type="tel" placeholder="Telefone (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">`;
-    const pjFields = `<input name="responsavel_nome" type="text" placeholder="Nome Completo do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_cpf" type="text" placeholder="CPF do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_email" type="email" placeholder="E-mail Pessoal do Responsável" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="empresa_email" type="email" placeholder="E-mail da Empresa" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="responsavel_telefone" type="tel" placeholder="Telefone Pessoal (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none"><input name="empresa_telefone" type="tel" placeholder="Telefone da Empresa (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">`;
-    const fileUploadSection = `<div><label class="block text-sm font-medium text-gray-700 mb-1">Anexe sua última fatura de energia:</label><div class="grid grid-cols-2 gap-2"><button type="button" id="upload-widget-btn" class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 btn-interactive"><i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Anexar Fatura</span></button></div><p id="file-name-display" class="text-xs text-gray-500 mt-2 text-center"></p></div>`;
+    // Campos para Pessoa Jurídica (Empresa)
+    const pjFields = `
+        <input name="nome_estabelecimento" type="text" placeholder="Nome do Estabelecimento" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
+        <input name="tipo_estabelecimento" type="text" placeholder="Tipo de Estabelecimento (Ex: Restaurante)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
+        <input name="nome_proprietario" type="text" placeholder="Nome do Proprietário" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
+        <input name="email_proprietario" type="email" placeholder="E-mail do Proprietário" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
+        <input name="telefone_proprietario" type="tel" placeholder="Telefone do Proprietário (com DDD)" required class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
+    `;
 
     formContainer.innerHTML = `
         <input type="hidden" name="access_key" value="4ee5d80b-0860-4b79-a30d-5c0392c46ff4">
-        <input type="hidden" name="subject" value="Novo Lead para Simulação Enerzee!">
-        <input type="hidden" id="fatura-url" name="fatura_url" value="">
+        <input type="hidden" name="subject" value="Novo Lead (Sem Fatura) - Simulação Enerzee!">
+        <input type="hidden" name="consumo_medio_em_reais" value="${leadData.billValue.toFixed(2)}">
+        
         ${leadData.type === 'pf' ? pfFields : pjFields}
-        ${fileUploadSection}
-        <div class="flex items-center justify-center gap-4 text-xs text-gray-500 pt-2"><span class="flex items-center gap-1"><i data-lucide="lock" class="w-4 h-4"></i> Ambiente Seguro</span><a href="#" id="privacy-link" class="hover:underline">Política de Privacidade</a></div>
-        <button type="submit" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg btn-interactive">Enviar para Simulação</button>
+        
+        <div class="flex items-center justify-center gap-4 text-xs text-gray-500 pt-2">
+            <span class="flex items-center gap-1"><i data-lucide="lock" class="w-4 h-4"></i> Ambiente Seguro</span>
+            <a href="#" id="privacy-link" class="hover:underline">Política de Privacidade</a>
+        </div>
+        <button type="submit" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg btn-interactive btn-pulsing">Enviar Para Análise</button>
     `;
     chatInputArea.appendChild(formContainer);
     
-    const cloudinaryWidget = cloudinary.createUploadWidget({
-        cloudName: 'di3ezpmyb', 
-        uploadPreset: 'ci0yimyz',
-        folder: 'faturas_enerzee',
-        language: 'pt',
-        text: { "pt": { "or_drag_a_file_here": "ou arraste o arquivo aqui" } }
-    }, (error, result) => { 
-        if (!error && result && result.event === "success") {
-            let finalUrl = result.info.secure_url;
-            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(result.info.format.toLowerCase());
-            if (!isImage) {
-                const urlParts = finalUrl.split('/upload/');
-                if (urlParts.length === 2) {
-                    finalUrl = `${urlParts[0]}/upload/fl_attachment/${urlParts[1]}`;
-                }
-            }
-            document.getElementById('fatura-url').value = finalUrl;
-            const fileNameDisplay = document.getElementById('file-name-display');
-            fileNameDisplay.textContent = `Arquivo enviado: ${result.info.original_filename}`;
-            fileNameDisplay.classList.add('text-green-600', 'font-semibold');
-        }
-    });
-
-    document.getElementById('upload-widget-btn').onclick = () => cloudinaryWidget.open();
     document.getElementById('privacy-link').onclick = (e) => { e.preventDefault(); openPrivacyModal(); };
     
-    formContainer.onsubmit = handleSubmit;
     lucide.createIcons();
-    scrollToBottom(); // <-- Chama a função de dupla rolagem
+    scrollToBottom(); 
 }
-        
+
+// --- ALTERAÇÃO: FUNÇÃO DE SUBMISSÃO SIMPLIFICADA ---
 async function handleSubmit(event) {
     event.preventDefault();
     const form = event.target;
     
-    if (!form.fatura_url.value) {
-        alert('Por favor, anexe sua fatura de energia para continuar.');
-        return;
-    }
-    
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-    Object.assign(leadData, data);
-    
-    clearInputArea();
+    // A validação do anexo foi removida.
+
     addMessage("Enviando seus dados...", 'user');
+    clearInputArea();
     showTypingIndicator();
+
+    const formData = new FormData(form);
 
     try {
         const response = await fetch('https://api.web3forms.com/submit', {
@@ -327,28 +255,25 @@ async function handleSubmit(event) {
             body: formData,
         });
         const result = await response.json();
+        hideTypingIndicator();
 
         if (result.success) {
-            hideTypingIndicator();
-            const leadName = leadData.name || leadData.responsavel_nome;
-            addMessage(`Perfeito, ${leadName}! Recebi tudo certinho, incluindo o anexo.`);
-            showTypingIndicator();
+            const leadName = form.nome_completo?.value || form.nome_proprietario?.value || "amigo(a)";
+            addMessage(`Perfeito, ${leadName}! Recebemos seus dados.`);
             setTimeout(() => {
-                hideTypingIndicator();
-                addMessage("Nossa equipe já está analisando seus dados para preparar a melhor proposta de economia para você. Em breve, um especialista entrará em contato. Obrigado por se juntar à nossa comunidade de energia limpa! ✅");
+                addMessage("Nossa equipe de especialistas já vai preparar uma proposta com base no seu consumo. Em breve, entraremos em contato. Obrigado por se juntar à nossa comunidade de energia limpa! ✅");
             }, 1200);
         } else {
-            hideTypingIndicator();
-            console.error("Erro no envio para Web3Forms:", result.message || result);
-            addMessage("Ocorreu um erro ao enviar seus dados. Por favor, tente novamente mais tarde. 😥", 'ia');
+            throw new Error(result.message);
         }
     } catch (error) {
         hideTypingIndicator();
-        console.error('Erro de rede:', error);
-        addMessage("Ocorreu um erro de conexão. Verifique sua internet e tente novamente. 😥", 'ia');
+        console.error('Erro no envio:', error);
+        addMessage("Ocorreu um erro ao enviar seus dados. Por favor, tente novamente ou entre em contato direto. 😥", 'ia');
     }
 }
 
+// --- FUNÇÕES DO MODAL (sem alterações) ---
 function openPrivacyModal() {
     privacyModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -358,8 +283,6 @@ function closePrivacyModal() {
     document.body.style.overflow = '';
 }
 closePrivacyModalBtn.onclick = closePrivacyModal;
-privacyModal.onclick = (e) => {
-    if (e.target === privacyModal) closePrivacyModal();
-};
+privacyModal.onclick = (e) => { if (e.target === privacyModal) closePrivacyModal(); };
 
 window.onload = startConversation;

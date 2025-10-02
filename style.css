@@ -5,7 +5,6 @@ body {
 #app-container {
     display: flex;
     flex-direction: column;
-    /* Alteração Chave: Altura mínima para ocupar a tela, mas automática para poder crescer */
     min-height: 100vh;
     height: auto;
 }
@@ -48,6 +47,27 @@ body {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* --- NOVO EFEITO DE BOTÃO PULSANTE --- */
+.btn-pulsing {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    50% {
+        transform: scale(1.03);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+}
+/* ------------------------------------ */
+
 .typing-indicator { 
     display: flex; 
     align-items: center; 
@@ -69,7 +89,6 @@ body {
 
 @media (max-width: 640px) {
     .main-container {
-        /* As regras de min-height já estão aplicadas globalmente, mas garantimos aqui */
         min-height: 100vh;
         height: auto;
         max-height: none;
