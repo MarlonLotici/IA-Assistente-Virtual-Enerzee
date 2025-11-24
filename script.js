@@ -1,7 +1,6 @@
 // =================================================================
 // CONFIGURAÇÃO OBRIGATÓRIA
 // =================================================================
-// Seu link do Cloudflare Worker
 const WORKER_URL = "https://jolly-morning-6b1f.marlonlotici6.workers.dev/"; 
 
 // =================================================================
@@ -12,15 +11,15 @@ const inputContainer = document.getElementById('input-container');
 const progressBar = document.getElementById('progress-bar');
 
 let leadData = {
-    propertyType: null, // 'proprio' ou 'alugado'
+    propertyType: null,
     city: null,
-    billAnalysis: null // Dados lidos pela IA
+    billAnalysis: null
 };
 
-let conversationHistory = []; // Mantém o contexto para o Gemini
+let conversationHistory = []; 
 
 // =================================================================
-// FUNÇÕES UTILITÁRIAS
+// FUNÇÕES UTILITÁRIAS (UI)
 // =================================================================
 
 function scrollToBottom() {
@@ -33,8 +32,10 @@ function updateProgress(percent) {
     progressBar.style.width = `${percent}%`;
 }
 
-// Adiciona mensagem na tela
 function addMessage(text, sender = 'ia', isHtml = false) {
+    // Se for mensagem de sistema oculta (tag), ignora
+    if (text.includes("#FINALIZAR_AGENDAMENTO#")) return;
+
     const div = document.createElement('div');
     div.className = `chat-message flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
     
@@ -45,21 +46,22 @@ function addMessage(text, sender = 'ia', isHtml = false) {
         : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
     }`;
 
+    // Converte quebras de linha (\n) em <br> para visualização correta
+    const formattedText = text.replace(/\n/g, '<br>');
+
     if (isHtml) bubble.innerHTML = text;
-    else bubble.textContent = text;
+    else bubble.innerHTML = formattedText; // Usa innerHTML para suportar o <br>
 
     div.appendChild(bubble);
     chatMessages.appendChild(div);
     scrollToBottom();
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    // Salva no histórico (exceto HTML complexo ou loading)
     if (!isHtml) {
         conversationHistory.push({ role: sender, content: text });
     }
 }
 
-// Indicador de "Digitando..."
 function showTypingIndicator() {
     const id = 'typing-indicator';
     if (document.getElementById(id)) return;
@@ -88,11 +90,6 @@ function hideTypingIndicator() {
 // =================================================================
 
 async function sendToGemini(userMessage, imageBase64 = null) {
-    if (WORKER_URL.includes("SEU_LINK")) {
-        alert("ERRO: Você precisa configurar o link do Worker no arquivo script.js!");
-        return "Erro de configuração.";
-    }
-
     try {
         const response = await fetch(WORKER_URL, {
             method: 'POST',
@@ -101,7 +98,7 @@ async function sendToGemini(userMessage, imageBase64 = null) {
                 message: userMessage,
                 history: conversationHistory,
                 leadData: leadData,
-                imageBase64: imageBase64 // Envia a imagem se houver
+                imageBase64: imageBase64
             })
         });
 
@@ -112,7 +109,7 @@ async function sendToGemini(userMessage, imageBase64 = null) {
 
     } catch (error) {
         console.error(error);
-        return "Desculpe, tive uma instabilidade técnica momentânea. Podemos continuar agendando uma conversa rápida com o Marlon?";
+        return "Tive um pequeno problema técnico. Pode repetir, por favor?";
     }
 }
 
@@ -120,7 +117,6 @@ async function sendToGemini(userMessage, imageBase64 = null) {
 // FLUXO DA CONVERSA
 // =================================================================
 
-// Passo 1: Início
 function startConversation() {
     updateProgress(10);
     showTypingIndicator();
@@ -186,7 +182,6 @@ function handleCity(city) {
     }, 800);
 }
 
-// Passo Crítico: Upload da Imagem
 function showUploadInput() {
     inputContainer.innerHTML = `
         <div class="w-full">
@@ -207,25 +202,21 @@ async function handleFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Feedback visual imediato
     addMessage(`<div class="flex items-center gap-2"><i data-lucide="image" class="w-4 h-4"></i> Foto enviada: ${file.name}</div>`, 'user', true);
-    inputContainer.innerHTML = ''; // Trava input
+    inputContainer.innerHTML = ''; 
     updateProgress(70);
     
     addMessage("🔍 Analisando sua fatura com Inteligência Artificial... Só um instante.", 'ia');
     showTypingIndicator();
 
-    // Converte imagem para Base64
     const reader = new FileReader();
     reader.onloadend = async function() {
-        const base64String = reader.result; // Contém "data:image/jpeg;base64,..."
-        
-        // Envia para o Worker (Gemini)
+        const base64String = reader.result;
         const aiResponse = await sendToGemini("Analise esta fatura e me diga o que encontrou de consumo e valor, e sugira a solução.", base64String);
         
         hideTypingIndicator();
         addMessage(aiResponse, 'ia');
-        enableFreeChat(); // Libera o chat livre após a análise
+        enableFreeChat();
     };
     reader.readAsDataURL(file);
 }
@@ -233,11 +224,11 @@ async function handleFileSelect(event) {
 function skipUpload() {
     addMessage("Prefiro digitar manualmente.", 'user');
     addMessage("Sem problemas! Qual o valor médio da sua fatura (R$)?", 'ia');
-    showFreeChatInput(); // Vai direto para o chat livre
+    showFreeChatInput(); 
 }
 
 // =================================================================
-// CORREÇÃO AQUI: LÓGICA DE GATILHO INTELIGENTE
+// ÁREA DE CHAT LIVRE & LÓGICA DE CONVERSÃO
 // =================================================================
 function showFreeChatInput() {
     inputContainer.innerHTML = `
@@ -256,42 +247,27 @@ function showFreeChatInput() {
 
         textInput.value = ''; 
         addMessage(text, 'user');
-        
-        // --- DETECÇÃO DE INTENÇÃO FORTE ---
-        const lowerText = text.toLowerCase();
-        
-        // Palavras que indicam, SEM DÚVIDA, que a pessoa quer a reunião
-        const closingKeywords = [
-            'agendar reunião', 
-            'marcar reunião', 
-            'pode me ligar', 
-            'quero contratar', 
-            'quero fechar',
-            'proposta oficial',
-            'falar com consultor',
-            'falar com humano',
-            'vamos agendar',
-            'agendar agora'
-        ];
-        
-        // Verifica se alguma das palavras fortes está na frase
-        const isConversion = closingKeywords.some(phrase => lowerText.includes(phrase));
-
-        // Se for conversão REAL, dispara o formulário
-        if (isConversion) {
-            hideTypingIndicator();
-            triggerLeadForm();
-            return;
-        }
-        
-        // Se a pessoa disse apenas "sim", "quero", "topo", ou fez uma pergunta ("como assim?"),
-        // ou qualquer outra coisa, DEIXAMOS A IA RESPONDER e qualificar.
-        // -------------------------------------
-
         showTypingIndicator();
+
+        // Envia para o Worker (IA)
         const response = await sendToGemini(text);
         hideTypingIndicator();
-        addMessage(response, 'ia');
+
+        // --- VERIFICA SE A IA DECIDIU FINALIZAR ---
+        if (response.includes("#FINALIZAR_AGENDAMENTO#")) {
+            // A IA identificou que o cliente mandou os dados!
+            addMessage("Perfeito! Estou processando seu agendamento...", 'ia');
+            
+            // Pega a última mensagem do usuário (que tem os dados) + Histórico
+            const userData = text; 
+            const fullHistory = JSON.stringify(conversationHistory);
+
+            // Aciona o envio automático
+            submitDataToEmail(userData, fullHistory);
+        } else {
+            // Continua a conversa normal
+            addMessage(response, 'ia');
+        }
     };
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
@@ -301,30 +277,42 @@ function enableFreeChat() {
     showFreeChatInput();
 }
 
-function triggerLeadForm() {
+// =================================================================
+// ENVIO REAL DOS DADOS (WEB3FORMS)
+// =================================================================
+async function submitDataToEmail(userData, historyChat) {
     updateProgress(100);
-    addMessage("Excelente! Vamos formalizar para eu te passar a proposta oficial. Preencha abaixo rapidinho:", 'ia');
-    
-    inputContainer.innerHTML = `
-        <form id="lead-form" class="w-full space-y-3 bg-gray-50 p-3 rounded-lg border animate-fade-in">
-            <input type="text" name="name" placeholder="Nome Completo" required class="w-full p-3 border rounded-lg">
-            <input type="tel" name="phone" placeholder="WhatsApp (com DDD)" required class="w-full p-3 border rounded-lg">
-            <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-all shadow-lg">Receber Proposta Completa</button>
-        </form>
-    `;
+    inputContainer.innerHTML = `<div class="bg-green-100 text-green-800 p-4 rounded-xl text-center font-bold flex items-center justify-center gap-2"><div class="spinner w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div> Agendando...</div>`;
 
-    document.getElementById('lead-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const btn = e.target.querySelector('button');
-        btn.innerHTML = 'Enviando...';
-        btn.disabled = true;
+    try {
+        // Cria um formulário invisível para enviar os dados
+        const formData = new FormData();
+        formData.append("access_key", "4ee5d80b-0860-4b79-a30d-5c0392c46ff4"); // Sua chave atual
+        formData.append("subject", "🚀 Novo Agendamento via IA - Enerzee");
+        formData.append("DADOS_DO_CLIENTE", userData); // O que ele digitou por último
+        formData.append("HISTORICO_CONVERSA", historyChat); // O papo todo para você ler
+        formData.append("TIPO_IMOVEL", leadData.propertyType);
+        formData.append("CIDADE", leadData.city);
 
-        // Aqui você integraria com seu CRM ou Web3Forms
-        await new Promise(r => setTimeout(r, 1500)); // Simulação
-        
-        inputContainer.innerHTML = `<div class="bg-green-100 text-green-800 p-4 rounded-xl text-center font-bold">✅ Dados recebidos! O Marlon entrará em contato em breve.</div>`;
-        addMessage("Obrigado! Já recebi seus dados. Em instantes nosso especialista humano te chama no WhatsApp com a análise técnica.", 'ia');
-    };
+        const response = await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            inputContainer.innerHTML = `<div class="bg-green-100 text-green-800 p-4 rounded-xl text-center font-bold">✅ Agendamento Confirmado!</div>`;
+            addMessage("Prontinho! ✅ Já enviei seus dados e o resumo da nossa conversa para o Marlon. Ele vai confirmar o horário com você pelo WhatsApp em breve. Obrigado!", 'ia');
+        } else {
+            throw new Error("Erro no Web3Forms");
+        }
+
+    } catch (error) {
+        console.error(error);
+        inputContainer.innerHTML = `<div class="bg-red-100 text-red-800 p-4 rounded-xl text-center">Erro ao enviar.</div>`;
+        addMessage("Ops! Tive um erro de conexão ao enviar o agendamento. Por favor, me chame direto no WhatsApp: (46) 99920-1690.", 'ia');
+    }
 }
 
 // Inicia ao carregar
