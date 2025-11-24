@@ -1,8 +1,7 @@
 // =================================================================
 // CONFIGURAÇÃO OBRIGATÓRIA
 // =================================================================
-// Cole aqui o link do seu Cloudflare Worker (criado na Parte 1)
-// Exemplo: "https://meu-bot-solar.marlon.workers.dev"
+// Seu link do Cloudflare Worker
 const WORKER_URL = "https://jolly-morning-6b1f.marlonlotici6.workers.dev/"; 
 
 // =================================================================
@@ -52,7 +51,7 @@ function addMessage(text, sender = 'ia', isHtml = false) {
     div.appendChild(bubble);
     chatMessages.appendChild(div);
     scrollToBottom();
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
     // Salva no histórico (exceto HTML complexo ou loading)
     if (!isHtml) {
@@ -169,7 +168,7 @@ function showCityInput() {
         const city = document.getElementById('city-input').value;
         if(city.trim()) handleCity(city);
     };
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
     document.getElementById('city-input').focus();
 }
 
@@ -181,7 +180,6 @@ function handleCity(city) {
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-        // AQUI ESTÁ O PULO DO GATO: Pedir a fatura para a IA ler
         addMessage(`Ótimo! Em ${city}, temos condições especiais.`);
         addMessage(`📸 **Agora vem a mágica:** Tire uma foto ou envie o PDF da sua conta de luz. Nossa IA vai ler os dados e calcular o potencial exato para você.`);
         showUploadInput();
@@ -202,7 +200,7 @@ function showUploadInput() {
     `;
     
     document.getElementById('file-upload').addEventListener('change', handleFileSelect);
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 async function handleFileSelect(event) {
@@ -238,7 +236,9 @@ function skipUpload() {
     showFreeChatInput(); // Vai direto para o chat livre
 }
 
-// Passo Final: Chat Livre com a IA
+// =================================================================
+// CORREÇÃO AQUI: LÓGICA DE GATILHO INTELIGENTE
+// =================================================================
 function showFreeChatInput() {
     inputContainer.innerHTML = `
         <form id="chat-form" class="flex gap-2 w-full">
@@ -249,26 +249,51 @@ function showFreeChatInput() {
     
     document.getElementById('chat-form').onsubmit = async (e) => {
         e.preventDefault();
-        const text = document.getElementById('chat-input').value;
+        const textInput = document.getElementById('chat-input');
+        const text = textInput.value;
+        
         if(!text.trim()) return;
 
-        document.getElementById('chat-input').value = '';
+        textInput.value = ''; 
         addMessage(text, 'user');
         
-        // Gatilhos de Conversão (Se o cliente quiser fechar)
-        const conversionWords = ['agendar', 'quero', 'fechar', 'reunião', 'sim', 'topo'];
-        if (conversionWords.some(w => text.toLowerCase().includes(w))) {
+        // --- DETECÇÃO DE INTENÇÃO FORTE ---
+        const lowerText = text.toLowerCase();
+        
+        // Palavras que indicam, SEM DÚVIDA, que a pessoa quer a reunião
+        const closingKeywords = [
+            'agendar reunião', 
+            'marcar reunião', 
+            'pode me ligar', 
+            'quero contratar', 
+            'quero fechar',
+            'proposta oficial',
+            'falar com consultor',
+            'falar com humano',
+            'vamos agendar',
+            'agendar agora'
+        ];
+        
+        // Verifica se alguma das palavras fortes está na frase
+        const isConversion = closingKeywords.some(phrase => lowerText.includes(phrase));
+
+        // Se for conversão REAL, dispara o formulário
+        if (isConversion) {
             hideTypingIndicator();
             triggerLeadForm();
             return;
         }
+        
+        // Se a pessoa disse apenas "sim", "quero", "topo", ou fez uma pergunta ("como assim?"),
+        // ou qualquer outra coisa, DEIXAMOS A IA RESPONDER e qualificar.
+        // -------------------------------------
 
         showTypingIndicator();
         const response = await sendToGemini(text);
         hideTypingIndicator();
         addMessage(response, 'ia');
     };
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function enableFreeChat() {
@@ -304,6 +329,6 @@ function triggerLeadForm() {
 
 // Inicia ao carregar
 window.onload = () => {
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
     startConversation();
 };
