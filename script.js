@@ -3,7 +3,7 @@
 // =================================================================
 // Cole aqui o link do seu Cloudflare Worker (criado na Parte 1)
 // Exemplo: "https://meu-bot-solar.marlon.workers.dev"
-const WORKER_URL = "jolly-morning-6b1f.marlonlotici6.workers.dev"; 
+const WORKER_URL = "https://jolly-morning-6b1f.marlonlotici6.workers.dev/"; 
 
 // =================================================================
 // ESTADO DA APLICAÇÃO
