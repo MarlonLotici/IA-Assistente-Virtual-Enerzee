@@ -1,7 +1,14 @@
 // =================================================================
 // CONFIGURAÇÃO OBRIGATÓRIA
 // =================================================================
+// Link do seu Cérebro (Cloudflare Worker)
 const WORKER_URL = "https://jolly-morning-6b1f.marlonlotici6.workers.dev/"; 
+
+// Chave para backup dos leads por e-mail
+const WEB3FORMS_ACCESS_KEY = "4ee5d80b-0860-4b79-a30d-5c0392c46ff4"; 
+
+// Seu número de WhatsApp para receber os leads (com 55 e DDD)
+const WHATSAPP_NUMBER = "5546999201690"; 
 
 // =================================================================
 // ESTADO DA APLICAÇÃO
@@ -11,7 +18,7 @@ const inputContainer = document.getElementById('input-container');
 const progressBar = document.getElementById('progress-bar');
 
 let leadData = {
-    propertyType: null,
+    propertyType: null, 
     city: null,
     billAnalysis: null
 };
@@ -19,7 +26,7 @@ let leadData = {
 let conversationHistory = []; 
 
 // =================================================================
-// FUNÇÕES UTILITÁRIAS (UI)
+// FUNÇÕES UTILITÁRIAS (VISUAL)
 // =================================================================
 
 function scrollToBottom() {
@@ -33,7 +40,7 @@ function updateProgress(percent) {
 }
 
 function addMessage(text, sender = 'ia', isHtml = false) {
-    // Se for mensagem de sistema oculta (tag), ignora
+    // BLINDAGEM: Se for o código secreto, NÃO MOSTRA NA TELA.
     if (text.includes("#FINALIZAR_AGENDAMENTO#")) return;
 
     const div = document.createElement('div');
@@ -46,15 +53,17 @@ function addMessage(text, sender = 'ia', isHtml = false) {
         : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
     }`;
 
-    // Converte quebras de linha (\n) em <br> para visualização correta
-    const formattedText = text.replace(/\n/g, '<br>');
-
+    // Formatação: Transforma quebras de linha em <br> para ficar bonito
+    let formattedText = text.replace(/\n/g, '<br>');
+    
     if (isHtml) bubble.innerHTML = text;
-    else bubble.innerHTML = formattedText; // Usa innerHTML para suportar o <br>
+    else bubble.innerHTML = formattedText;
 
     div.appendChild(bubble);
     chatMessages.appendChild(div);
     scrollToBottom();
+    
+    // Atualiza ícones se necessário
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     if (!isHtml) {
@@ -86,7 +95,7 @@ function hideTypingIndicator() {
 }
 
 // =================================================================
-// CONEXÃO COM A IA (BACKEND)
+// CONEXÃO COM A IA (WORKER)
 // =================================================================
 
 async function sendToGemini(userMessage, imageBase64 = null) {
@@ -103,18 +112,17 @@ async function sendToGemini(userMessage, imageBase64 = null) {
         });
 
         if (!response.ok) throw new Error('Falha na conexão com a IA');
-        
         const data = await response.json();
         return data.response;
 
     } catch (error) {
         console.error(error);
-        return "Tive um pequeno problema técnico. Pode repetir, por favor?";
+        return "Minha conexão oscilou um pouquinho. Pode repetir?";
     }
 }
 
 // =================================================================
-// FLUXO DA CONVERSA
+// FLUXO INICIAL (TRIAGEM)
 // =================================================================
 
 function startConversation() {
@@ -122,7 +130,7 @@ function startConversation() {
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-        addMessage("Olá! 👋 Sou o assistente inteligente da Enerzee. Vou analisar seu perfil para encontrarmos a melhor oportunidade de economia (Solar ou Assinatura).");
+        addMessage("Olá! 👋 Sou o assistente inteligente da Enerzee. Vou analisar seu perfil para encontrarmos a melhor oportunidade de economia.");
         setTimeout(() => {
             addMessage("Para começar: O imóvel é **Próprio** ou **Alugado**?");
             showPropertyOptions();
@@ -182,6 +190,7 @@ function handleCity(city) {
     }, 800);
 }
 
+// Passo Crítico: Upload da Imagem
 function showUploadInput() {
     inputContainer.innerHTML = `
         <div class="w-full">
@@ -212,11 +221,12 @@ async function handleFileSelect(event) {
     const reader = new FileReader();
     reader.onloadend = async function() {
         const base64String = reader.result;
+        // Envia imagem pro Worker
         const aiResponse = await sendToGemini("Analise esta fatura e me diga o que encontrou de consumo e valor, e sugira a solução.", base64String);
         
         hideTypingIndicator();
         addMessage(aiResponse, 'ia');
-        enableFreeChat();
+        enableFreeChat(); 
     };
     reader.readAsDataURL(file);
 }
@@ -228,7 +238,7 @@ function skipUpload() {
 }
 
 // =================================================================
-// ÁREA DE CHAT LIVRE & LÓGICA DE CONVERSÃO
+// CHAT LIVRE & DETECÇÃO DE CONVERSÃO
 // =================================================================
 function showFreeChatInput() {
     inputContainer.innerHTML = `
@@ -249,21 +259,17 @@ function showFreeChatInput() {
         addMessage(text, 'user');
         showTypingIndicator();
 
-        // Envia para o Worker (IA)
+        // Envia para o Gemini responder
         const response = await sendToGemini(text);
         hideTypingIndicator();
 
-        // --- VERIFICA SE A IA DECIDIU FINALIZAR ---
+        // --- VERIFICA SE A IA DEU O SINAL VERDE ---
         if (response.includes("#FINALIZAR_AGENDAMENTO#")) {
-            // A IA identificou que o cliente mandou os dados!
-            addMessage("Perfeito! Estou processando seu agendamento...", 'ia');
             
-            // Pega a última mensagem do usuário (que tem os dados) + Histórico
-            const userData = text; 
-            const fullHistory = JSON.stringify(conversationHistory);
+            // 1. A IA detectou Nome+Telefone+Horário
+            // 2. Acionamos o finalizador com a última mensagem do usuário (onde estão os dados)
+            submitDataFinal(text, JSON.stringify(conversationHistory));
 
-            // Aciona o envio automático
-            submitDataToEmail(userData, fullHistory);
         } else {
             // Continua a conversa normal
             addMessage(response, 'ia');
@@ -278,44 +284,74 @@ function enableFreeChat() {
 }
 
 // =================================================================
-// ENVIO REAL DOS DADOS (WEB3FORMS)
+// FINALIZAÇÃO: E-MAIL (BACKUP) + WHATSAPP (PRINCIPAL)
 // =================================================================
-async function submitDataToEmail(userData, historyChat) {
+async function submitDataFinal(userData, historyChat) {
     updateProgress(100);
-    inputContainer.innerHTML = `<div class="bg-green-100 text-green-800 p-4 rounded-xl text-center font-bold flex items-center justify-center gap-2"><div class="spinner w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div> Agendando...</div>`;
+    
+    // Feedback visual enquanto processa
+    inputContainer.innerHTML = `<div class="bg-green-50 text-green-800 p-4 rounded-xl text-center font-semibold border border-green-200 flex items-center justify-center gap-2"><div class="spinner w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div> Gerando link de confirmação...</div>`;
+
+    // 1. Preparar o Texto para o WhatsApp (Resumo Inteligente para VOCÊ ler)
+    const wppMessage = `Olá Marlon! 👋
+    
+Vim pelo Assistente Virtual da Enerzee.
+Gostaria de confirmar meu agendamento.
+
+*Meus Dados:*
+${userData}
+
+*Interesse:* Imóvel ${leadData.propertyType === 'proprio' ? 'Próprio 🏠' : 'Alugado 🏢'} em ${leadData.city}
+    
+Pode confirmar meu horário?`;
+
+    // Cria o link Mágico
+    const encodedMessage = encodeURIComponent(wppMessage);
+    const wppLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
 
     try {
-        // Cria um formulário invisível para enviar os dados
+        // 2. Tenta enviar o e-mail de backup (silencioso) para o Web3Forms
         const formData = new FormData();
-        formData.append("access_key", "4ee5d80b-0860-4b79-a30d-5c0392c46ff4"); // Sua chave atual
-        formData.append("subject", "🚀 Novo Agendamento via IA - Enerzee");
-        formData.append("DADOS_DO_CLIENTE", userData); // O que ele digitou por último
-        formData.append("HISTORICO_CONVERSA", historyChat); // O papo todo para você ler
-        formData.append("TIPO_IMOVEL", leadData.propertyType);
-        formData.append("CIDADE", leadData.city);
+        formData.append("access_key", WEB3FORMS_ACCESS_KEY); 
+        formData.append("subject", "🚀 Lead via IA (Cópia de Segurança)");
+        formData.append("DADOS_CLIENTE", userData); 
+        formData.append("RESUMO_IA", "O cliente finalizou pelo botão do WhatsApp."); 
+        formData.append("HISTORICO_CONVERSA", historyChat); 
 
-        const response = await fetch('https://api.web3forms.com/submit', {
-            method: 'POST',
-            body: formData
-        });
+        // Dispara o email sem travar o código (fire and forget)
+        fetch('https://api.web3forms.com/submit', { method: 'POST', body: formData });
 
-        const result = await response.json();
-
-        if (result.success) {
-            inputContainer.innerHTML = `<div class="bg-green-100 text-green-800 p-4 rounded-xl text-center font-bold">✅ Agendamento Confirmado!</div>`;
-            addMessage("Prontinho! ✅ Já enviei seus dados e o resumo da nossa conversa para o Marlon. Ele vai confirmar o horário com você pelo WhatsApp em breve. Obrigado!", 'ia');
-        } else {
-            throw new Error("Erro no Web3Forms");
-        }
+        // 3. Mostra a TELA FINAL com o Botão do WhatsApp
+        setTimeout(() => {
+            // Mensagem da IA finalizando o papo
+            addMessage("Perfeito! Gereui um link de prioridade para você falar direto comigo. 👇", 'ia');
+            
+            // Substitui o input pelo botão do WhatsApp
+            inputContainer.innerHTML = `
+                <div class="space-y-3 animate-fade-in">
+                    <div class="bg-green-50 text-green-800 p-3 rounded-xl text-center text-sm border border-green-200">
+                        ✅ Pré-agendamento realizado!<br>Para confirmar, clique abaixo e envie a mensagem no WhatsApp.
+                    </div>
+                    
+                    <a href="${wppLink}" target="_blank" class="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-4 rounded-xl shadow-lg transition-transform hover:scale-105">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        Confirmar no WhatsApp
+                    </a>
+                    
+                    <p class="text-xs text-center text-gray-400">Ao clicar, o WhatsApp abrirá com seus dados preenchidos.</p>
+                </div>
+            `;
+            
+        }, 800);
 
     } catch (error) {
         console.error(error);
-        inputContainer.innerHTML = `<div class="bg-red-100 text-red-800 p-4 rounded-xl text-center">Erro ao enviar.</div>`;
-        addMessage("Ops! Tive um erro de conexão ao enviar o agendamento. Por favor, me chame direto no WhatsApp: (46) 99920-1690.", 'ia');
+        // Se der erro no email, mostra o botão do WhatsApp mesmo assim (Prioridade)
+        inputContainer.innerHTML = `<a href="${wppLink}" target="_blank" class="w-full bg-green-500 text-white py-3 rounded-xl text-center block font-bold">Chamar no WhatsApp</a>`;
     }
 }
 
-// Inicia ao carregar
+// Inicia ao carregar a página
 window.onload = () => {
     if (typeof lucide !== 'undefined') lucide.createIcons();
     startConversation();
