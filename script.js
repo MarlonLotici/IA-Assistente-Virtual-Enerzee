@@ -1,32 +1,22 @@
 // =================================================================
-// CONFIGURAÇÃO OBRIGATÓRIA
+// CONFIGURAÇÃO
 // =================================================================
-// Link do seu Cérebro (Cloudflare Worker)
 const WORKER_URL = "https://jolly-morning-6b1f.marlonlotici6.workers.dev/"; 
-
-// Chave para backup dos leads por e-mail
 const WEB3FORMS_ACCESS_KEY = "4ee5d80b-0860-4b79-a30d-5c0392c46ff4"; 
-
-// Seu número de WhatsApp para receber os leads (com 55 e DDD)
 const WHATSAPP_NUMBER = "5546999201690"; 
+// Substitua pelo SEU link do Calendly
+const CALENDLY_LINK = "https://calendly.com/SEU_USUARIO/reuniao-enerzee"; 
 
-// =================================================================
-// ESTADO DA APLICAÇÃO
-// =================================================================
+// Estado
 const chatMessages = document.getElementById('chat-messages');
 const inputContainer = document.getElementById('input-container');
 const progressBar = document.getElementById('progress-bar');
 
-let leadData = {
-    propertyType: null, 
-    city: null,
-    billAnalysis: null
-};
-
+let leadData = { propertyType: null, city: null, billValue: null };
 let conversationHistory = []; 
 
 // =================================================================
-// FUNÇÕES UTILITÁRIAS (VISUAL)
+// UI HELPERS
 // =================================================================
 
 function scrollToBottom() {
@@ -40,20 +30,15 @@ function updateProgress(percent) {
 }
 
 function addMessage(text, sender = 'ia', isHtml = false) {
-    // BLINDAGEM: Se for o código secreto, NÃO MOSTRA NA TELA.
-    if (text.includes("#FINALIZAR_AGENDAMENTO#")) return;
+    if (text.includes("#TRIGGER_CALENDLY#")) return;
 
     const div = document.createElement('div');
     div.className = `chat-message flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
     
     const bubble = document.createElement('div');
-    bubble.className = `max-w-[85%] p-3.5 rounded-2xl text-sm md:text-base shadow-sm ${
-        sender === 'user' 
-        ? 'bg-sky-600 text-white rounded-tr-none' 
-        : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
-    }`;
+    // Classes definidas no CSS do HTML (bubble-ia / bubble-user)
+    bubble.className = `max-w-[85%] p-4 rounded-2xl text-sm md:text-base ${sender === 'user' ? 'bubble-user' : 'bubble-ia'}`;
 
-    // Formatação: Transforma quebras de linha em <br> para ficar bonito
     let formattedText = text.replace(/\n/g, '<br>');
     
     if (isHtml) bubble.innerHTML = text;
@@ -62,40 +47,33 @@ function addMessage(text, sender = 'ia', isHtml = false) {
     div.appendChild(bubble);
     chatMessages.appendChild(div);
     scrollToBottom();
-    
-    // Atualiza ícones se necessário
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    if (!isHtml) {
-        conversationHistory.push({ role: sender, content: text });
-    }
+    if (!isHtml) conversationHistory.push({ role: sender, content: text });
 }
 
 function showTypingIndicator() {
-    const id = 'typing-indicator';
-    if (document.getElementById(id)) return;
-    
+    if (document.getElementById('typing-indicator')) return;
     const div = document.createElement('div');
-    div.id = id;
+    div.id = 'typing-indicator';
     div.className = 'chat-message flex justify-start';
     div.innerHTML = `
-        <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-gray-100 shadow-sm flex gap-1">
+        <div class="bubble-ia p-4 rounded-2xl flex gap-1">
             <div class="typing-dot w-2 h-2 bg-gray-400 rounded-full"></div>
             <div class="typing-dot w-2 h-2 bg-gray-400 rounded-full"></div>
             <div class="typing-dot w-2 h-2 bg-gray-400 rounded-full"></div>
-        </div>
-    `;
+        </div>`;
     chatMessages.appendChild(div);
     scrollToBottom();
 }
 
 function hideTypingIndicator() {
-    const indicator = document.getElementById('typing-indicator');
-    if (indicator) indicator.remove();
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
 }
 
 // =================================================================
-// CONEXÃO COM A IA (WORKER)
+// CONEXÃO IA
 // =================================================================
 
 async function sendToGemini(userMessage, imageBase64 = null) {
@@ -110,19 +88,17 @@ async function sendToGemini(userMessage, imageBase64 = null) {
                 imageBase64: imageBase64
             })
         });
-
-        if (!response.ok) throw new Error('Falha na conexão com a IA');
+        if (!response.ok) throw new Error('Erro API');
         const data = await response.json();
         return data.response;
-
     } catch (error) {
         console.error(error);
-        return "Minha conexão oscilou um pouquinho. Pode repetir?";
+        return "Minha conexão oscilou. Pode repetir?";
     }
 }
 
 // =================================================================
-// FLUXO INICIAL (TRIAGEM)
+// FLUXO DE TRIAGEM (GPCTBA)
 // =================================================================
 
 function startConversation() {
@@ -130,10 +106,13 @@ function startConversation() {
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-        addMessage("Olá! 👋 Sou o assistente inteligente da Enerzee. Vou analisar seu perfil para encontrarmos a melhor oportunidade de economia.");
+        addMessage("Olá! 🐦 Sou o **Zee**, seu consultor de economia.");
         setTimeout(() => {
-            addMessage("Para começar: O imóvel é **Próprio** ou **Alugado**?");
-            showPropertyOptions();
+            addMessage("Vou analisar seu perfil rapidinho para descobrirmos quanto você pode economizar (Solar ou Assinatura).");
+            setTimeout(() => {
+                addMessage("Para começar: O imóvel é **Próprio** ou **Alugado**?");
+                showPropertyOptions();
+            }, 800);
         }, 800);
     }, 600);
 }
@@ -141,8 +120,8 @@ function startConversation() {
 function showPropertyOptions() {
     inputContainer.innerHTML = `
         <div class="flex gap-2 animate-pulse-once">
-            <button onclick="handleProperty('proprio')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 rounded-xl transition-all shadow-lg hover:-translate-y-1">🏠 Próprio</button>
-            <button onclick="handleProperty('alugado')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 rounded-xl transition-all shadow-lg hover:-translate-y-1">🏢 Alugado</button>
+            <button onclick="handleProperty('proprio')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-1">🏠 Próprio</button>
+            <button onclick="handleProperty('alugado')" class="flex-1 bg-white border-2 border-slate-200 hover:border-slate-800 text-slate-700 font-medium py-3 rounded-xl shadow-sm transition-all">🏢 Alugado</button>
         </div>
     `;
 }
@@ -150,12 +129,12 @@ function showPropertyOptions() {
 function handleProperty(type) {
     leadData.propertyType = type;
     addMessage(type === 'proprio' ? 'Imóvel Próprio 🏠' : 'Imóvel Alugado 🏢', 'user');
-    updateProgress(30);
+    updateProgress(25);
     
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-        addMessage("Certo. E em qual cidade fica o imóvel?");
+        addMessage("Entendido. E em qual cidade fica o imóvel?");
         showCityInput();
     }, 600);
 }
@@ -163,8 +142,8 @@ function handleProperty(type) {
 function showCityInput() {
     inputContainer.innerHTML = `
         <form id="city-form" class="flex gap-2 w-full">
-            <input type="text" id="city-input" placeholder="Ex: Curitiba, Londrina..." required class="flex-1 p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500">
-            <button type="submit" class="bg-green-500 text-white p-3 rounded-xl hover:bg-green-600 transition-colors"><i data-lucide="send" class="w-5 h-5"></i></button>
+            <input type="text" id="city-input" placeholder="Ex: Curitiba..." required class="flex-1 p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50">
+            <button type="submit" class="bg-green-500 text-white p-4 rounded-xl hover:bg-green-600 transition-colors shadow-lg"><i data-lucide="send" class="w-5 h-5"></i></button>
         </form>
     `;
     document.getElementById('city-form').onsubmit = (e) => {
@@ -172,79 +151,83 @@ function showCityInput() {
         const city = document.getElementById('city-input').value;
         if(city.trim()) handleCity(city);
     };
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    lucide.createIcons();
     document.getElementById('city-input').focus();
 }
 
 function handleCity(city) {
     leadData.city = city;
     addMessage(city, 'user');
-    updateProgress(50);
+    updateProgress(40);
     
+    showTypingIndicator();
+    // Aqui a IA já começa a personalizar com base na cidade
+    sendToGemini(`O cliente é de ${city}, imóvel ${leadData.propertyType}. Dê as boas vindas personalizadas e pergunte o valor da fatura.`).then(res => {
+        hideTypingIndicator();
+        addMessage(res, 'ia');
+        showBillInputOptions();
+    });
+}
+
+// Opções Claras: Digitar ou Foto (UX Melhorada)
+function showBillInputOptions() {
+    inputContainer.innerHTML = `
+        <div class="flex gap-2 w-full">
+            <label class="flex-1 flex items-center justify-center gap-2 bg-green-100 text-green-800 font-medium py-3 rounded-xl cursor-pointer hover:bg-green-200 transition-colors">
+                <i data-lucide="camera" class="w-5 h-5"></i> Foto da Conta
+                <input id="file-upload" type="file" accept="image/*" class="hidden">
+            </label>
+            <button onclick="enableManualInput()" class="flex-1 bg-white border-2 border-gray-200 text-gray-600 font-medium py-3 rounded-xl hover:border-gray-400 transition-colors">
+                Digitar Valor
+            </button>
+        </div>
+    `;
+    document.getElementById('file-upload').addEventListener('change', handleFileSelect);
+    lucide.createIcons();
+}
+
+function enableManualInput() {
+    addMessage("Vou digitar o valor.", 'user');
+    updateProgress(50);
     showTypingIndicator();
     setTimeout(() => {
         hideTypingIndicator();
-        addMessage(`Ótimo! Em ${city}, temos condições especiais.`);
-        addMessage(`📸 **Agora vem a mágica:** Tire uma foto ou envie o PDF da sua conta de luz. Nossa IA vai ler os dados e calcular o potencial exato para você.`);
-        showUploadInput();
-    }, 800);
-}
-
-// Passo Crítico: Upload da Imagem
-function showUploadInput() {
-    inputContainer.innerHTML = `
-        <div class="w-full">
-            <label for="file-upload" class="flex items-center justify-center w-full p-4 border-2 border-dashed border-green-400 rounded-xl cursor-pointer bg-green-50 hover:bg-green-100 transition-colors gap-2">
-                <i data-lucide="camera" class="w-6 h-6 text-green-600"></i>
-                <span class="text-green-800 font-medium">Enviar Foto da Fatura</span>
-                <input id="file-upload" type="file" accept="image/*" class="hidden">
-            </label>
-            <button onclick="skipUpload()" class="w-full mt-2 text-xs text-gray-400 hover:text-gray-600 underline text-center">Prefiro digitar os valores manualmente</button>
-        </div>
-    `;
-    
-    document.getElementById('file-upload').addEventListener('change', handleFileSelect);
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+        addMessage("Sem problemas! Qual o valor médio da sua fatura (R$)?", 'ia');
+        showFreeChatInput(); // Libera o chat livre aqui
+    }, 600);
 }
 
 async function handleFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    addMessage(`<div class="flex items-center gap-2"><i data-lucide="image" class="w-4 h-4"></i> Foto enviada: ${file.name}</div>`, 'user', true);
+    addMessage(`<div class="flex items-center gap-2"><i data-lucide="image" class="w-4 h-4"></i> Foto enviada</div>`, 'user', true);
     inputContainer.innerHTML = ''; 
-    updateProgress(70);
+    updateProgress(60);
     
-    addMessage("🔍 Analisando sua fatura com Inteligência Artificial... Só um instante.", 'ia');
+    addMessage("🔍 O Zee está analisando sua fatura... Só um instante.", 'ia');
     showTypingIndicator();
 
     const reader = new FileReader();
     reader.onloadend = async function() {
         const base64String = reader.result;
-        // Envia imagem pro Worker
-        const aiResponse = await sendToGemini("Analise esta fatura e me diga o que encontrou de consumo e valor, e sugira a solução.", base64String);
-        
+        const aiResponse = await sendToGemini("Analise esta fatura: consumo kWh e Valor R$. Seja breve.", base64String);
         hideTypingIndicator();
         addMessage(aiResponse, 'ia');
-        enableFreeChat(); 
+        showFreeChatInput(); // Libera o chat livre
     };
     reader.readAsDataURL(file);
 }
 
-function skipUpload() {
-    addMessage("Prefiro digitar manualmente.", 'user');
-    addMessage("Sem problemas! Qual o valor médio da sua fatura (R$)?", 'ia');
-    showFreeChatInput(); 
-}
+// =================================================================
+// CHAT LIVRE & INTEGRAÇÃO CALENDLY
+// =================================================================
 
-// =================================================================
-// CHAT LIVRE & DETECÇÃO DE CONVERSÃO
-// =================================================================
 function showFreeChatInput() {
     inputContainer.innerHTML = `
         <form id="chat-form" class="flex gap-2 w-full">
-            <input type="text" id="chat-input" placeholder="Digite sua dúvida..." class="flex-1 p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-green-500">
-            <button type="submit" class="bg-green-500 text-white p-3 rounded-xl hover:bg-green-600"><i data-lucide="send" class="w-5 h-5"></i></button>
+            <input type="text" id="chat-input" placeholder="Digite sua mensagem..." class="flex-1 p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50">
+            <button type="submit" class="bg-green-500 text-white p-4 rounded-xl hover:bg-green-600 transition-colors shadow-lg"><i data-lucide="send" class="w-5 h-5"></i></button>
         </form>
     `;
     
@@ -252,107 +235,112 @@ function showFreeChatInput() {
         e.preventDefault();
         const textInput = document.getElementById('chat-input');
         const text = textInput.value;
-        
         if(!text.trim()) return;
 
         textInput.value = ''; 
         addMessage(text, 'user');
         showTypingIndicator();
 
-        // Envia para o Gemini responder
+        // 1. Envia mensagem para a IA processar
         const response = await sendToGemini(text);
         hideTypingIndicator();
 
-        // --- VERIFICA SE A IA DEU O SINAL VERDE ---
-        if (response.includes("#FINALIZAR_AGENDAMENTO#")) {
+        // 2. Verifica se a IA disparou o gatilho de agendamento
+        if (response.includes("#TRIGGER_CALENDLY#")) {
+            // Salva a intenção
+            conversationHistory.push({ role: 'ia', content: "Gatilho de Agendamento Acionado" });
             
-            // 1. A IA detectou Nome+Telefone+Horário
-            // 2. Acionamos o finalizador com a última mensagem do usuário (onde estão os dados)
-            submitDataFinal(text, JSON.stringify(conversationHistory));
-
+            // Mostra mensagem de sucesso antes do botão
+            addMessage("Excelente decisão! Vamos agendar com o Marlon agora mesmo.", 'ia');
+            
+            // Ativa a interface final
+            triggerCalendlyFlow();
         } else {
-            // Continua a conversa normal
             addMessage(response, 'ia');
         }
     };
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-
-function enableFreeChat() {
-    updateProgress(90);
-    showFreeChatInput();
+    lucide.createIcons();
 }
 
 // =================================================================
-// FINALIZAÇÃO: E-MAIL (BACKUP) + WHATSAPP (PRINCIPAL)
+// FLUXO FINAL: EMAIL + CALENDLY + WHATSAPP
 // =================================================================
-async function submitDataFinal(userData, historyChat) {
+
+function triggerCalendlyFlow() {
     updateProgress(100);
     
-    // Feedback visual enquanto processa
-    inputContainer.innerHTML = `<div class="bg-green-50 text-green-800 p-4 rounded-xl text-center font-semibold border border-green-200 flex items-center justify-center gap-2"><div class="spinner w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div> Gerando link de confirmação...</div>`;
+    // Envia o relatório por e-mail (silenciosamente)
+    sendEmailReport();
 
-    // 1. Preparar o Texto para o WhatsApp (Resumo Inteligente para VOCÊ ler)
-    const wppMessage = `Olá Marlon! 👋
-    
-Vim pelo Assistente Virtual da Enerzee.
-Gostaria de confirmar meu agendamento.
-
-*Meus Dados:*
-${userData}
-
-*Interesse:* Imóvel ${leadData.propertyType === 'proprio' ? 'Próprio 🏠' : 'Alugado 🏢'} em ${leadData.city}
-    
-Pode confirmar meu horário?`;
-
-    // Cria o link Mágico
-    const encodedMessage = encodeURIComponent(wppMessage);
-    const wppLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
-
-    try {
-        // 2. Tenta enviar o e-mail de backup (silencioso) para o Web3Forms
-        const formData = new FormData();
-        formData.append("access_key", WEB3FORMS_ACCESS_KEY); 
-        formData.append("subject", "🚀 Lead via IA (Cópia de Segurança)");
-        formData.append("DADOS_CLIENTE", userData); 
-        formData.append("RESUMO_IA", "O cliente finalizou pelo botão do WhatsApp."); 
-        formData.append("HISTORICO_CONVERSA", historyChat); 
-
-        // Dispara o email sem travar o código (fire and forget)
-        fetch('https://api.web3forms.com/submit', { method: 'POST', body: formData });
-
-        // 3. Mostra a TELA FINAL com o Botão do WhatsApp
-        setTimeout(() => {
-            // Mensagem da IA finalizando o papo
-            addMessage("Perfeito! Gereui um link de prioridade para você falar direto comigo. 👇", 'ia');
+    // Mostra opções de agendamento
+    inputContainer.innerHTML = `
+        <div class="flex flex-col gap-3 w-full animate-fade-in">
+            <!-- Botão Calendly -->
+            <button onclick="openCalendly()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform hover:scale-105">
+                <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                Agendar Reunião (Calendly)
+            </button>
             
-            // Substitui o input pelo botão do WhatsApp
-            inputContainer.innerHTML = `
-                <div class="space-y-3 animate-fade-in">
-                    <div class="bg-green-50 text-green-800 p-3 rounded-xl text-center text-sm border border-green-200">
-                        ✅ Pré-agendamento realizado!<br>Para confirmar, clique abaixo e envie a mensagem no WhatsApp.
-                    </div>
-                    
-                    <a href="${wppLink}" target="_blank" class="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-4 rounded-xl shadow-lg transition-transform hover:scale-105">
-                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                        Confirmar no WhatsApp
-                    </a>
-                    
-                    <p class="text-xs text-center text-gray-400">Ao clicar, o WhatsApp abrirá com seus dados preenchidos.</p>
-                </div>
-            `;
-            
-        }, 800);
+            <!-- Botão WhatsApp (Plano B) -->
+            <a href="${generateWhatsappLink()}" target="_blank" class="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-sm">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                Prefiro confirmar pelo WhatsApp
+            </a>
+        </div>
+    `;
+    lucide.createIcons();
+    
+    addMessage(`📅 **Próximo Passo:**<br>Para garantir que não haja conflito de horários, integramos nossa agenda oficial.<br><br>Clique em **"Agendar Reunião"** abaixo e escolha o melhor horário para você. É automático!`, 'ia', true);
+}
 
-    } catch (error) {
-        console.error(error);
-        // Se der erro no email, mostra o botão do WhatsApp mesmo assim (Prioridade)
-        inputContainer.innerHTML = `<a href="${wppLink}" target="_blank" class="w-full bg-green-500 text-white py-3 rounded-xl text-center block font-bold">Chamar no WhatsApp</a>`;
+function openCalendly() {
+    // Abre o popup do Calendly
+    // Certifique-se de ter colocado o script do Calendly no HTML
+    if (window.Calendly) {
+        window.Calendly.initPopupWidget({ url: CALENDLY_LINK });
+    } else {
+        window.open(CALENDLY_LINK, '_blank');
     }
 }
 
-// Inicia ao carregar a página
+function generateWhatsappLink() {
+    const text = `Olá Marlon! 👋\n\nFinalizei a conversa com o Zee (IA).\nGostaria de confirmar um horário para a consultoria.\n\n*Interesse:* ${leadData.propertyType} em ${leadData.city}\n\nPodemos conversar?`;
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+}
+
+async function sendEmailReport() {
+    // Formata o histórico para HTML bonito no email
+    let htmlHistory = conversationHistory.map(msg => 
+        `<p><b>${msg.role.toUpperCase()}:</b> ${msg.content}</p>`
+    ).join('');
+
+    const htmlBody = `
+        <h2>🚀 Novo Lead Qualificado (Via Chatbot Enerzee)</h2>
+        <hr>
+        <h3>📊 Perfil do Cliente</h3>
+        <ul>
+            <li><b>Imóvel:</b> ${leadData.propertyType}</li>
+            <li><b>Cidade:</b> ${leadData.city}</li>
+            <li><b>Valor Fatura (estimado):</b> ${leadData.billValue || "Não informado no campo"}</li>
+        </ul>
+        <hr>
+        <h3>💬 Histórico da Conversa</h3>
+        <div style="background:#f4f4f4; padding:15px; border-radius:10px;">
+            ${htmlHistory}
+        </div>
+    `;
+
+    const formData = new FormData();
+    formData.append("access_key", WEB3FORMS_ACCESS_KEY); 
+    formData.append("subject", `🔥 Lead Enerzee: ${leadData.city} - ${leadData.propertyType}`);
+    formData.append("message", htmlBody); // Web3Forms renderiza HTML se detectar tags
+
+    // Disparo fire-and-forget (não trava a tela)
+    fetch('https://api.web3forms.com/submit', { method: 'POST', body: formData });
+}
+
+// Init
 window.onload = () => {
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    lucide.createIcons();
     startConversation();
 };
