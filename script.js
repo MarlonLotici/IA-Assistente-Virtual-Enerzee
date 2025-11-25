@@ -4,22 +4,21 @@
 const WORKER_URL = "https://jolly-morning-6b1f.marlonlotici6.workers.dev/"; 
 const WEB3FORMS_ACCESS_KEY = "4ee5d80b-0860-4b79-a30d-5c0392c46ff4"; 
 const WHATSAPP_NUMBER = "5546999201690"; 
+// *** IMPORTANTE: COLOQUE SEU LINK DO CALENDLY AQUI ***
 const CALENDLY_LINK = "https://calendly.com/marlonlotici2/consultoria-energetica"; 
 
-// =================================================================
-// ESTADO
-// =================================================================
+// Variáveis de Estado
 const chatMessages = document.getElementById('chat-messages');
 const inputContainer = document.getElementById('input-container');
 const progressBar = document.getElementById('progress-bar');
 
 let leadData = { propertyType: null, city: null, billValue: null };
 let conversationHistory = []; 
-let uploadedFile = null; 
-let manualInputMode = false; // Variável de controle do Loop
+let uploadedFile = null; // Para o anexo do email
+let manualInputMode = false; // Controle para evitar loop de botões
 
 // =================================================================
-// UI HELPERS
+// UI HELPERS (Visual)
 // =================================================================
 
 function scrollToBottom() {
@@ -33,25 +32,34 @@ function updateProgress(percent) {
 }
 
 function addMessage(text, sender = 'ia', isHtml = false) {
+    // Se for comando interno da IA, não exibe na tela
     if (text.includes("#TRIGGER_CALENDLY#")) return;
 
     const div = document.createElement('div');
     div.className = `chat-message flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
     
     const bubble = document.createElement('div');
+    // Classes definidas no CSS do HTML
     bubble.className = `max-w-[85%] p-4 rounded-2xl text-sm md:text-base shadow-sm ${
-        sender === 'user' ? 'bubble-user' : 'bubble-ia'
+        sender === 'user' 
+        ? 'bubble-user' 
+        : 'bubble-ia'
     }`;
 
+    // Formatação básica: transforma quebras de linha em <br>
     let formattedText = text.replace(/\n/g, '<br>');
+    
     if (isHtml) bubble.innerHTML = text;
     else bubble.innerHTML = formattedText;
 
     div.appendChild(bubble);
     chatMessages.appendChild(div);
     scrollToBottom();
+    
+    // Atualiza ícones se necessário
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
+    // Salva no histórico (para a IA ter contexto)
     if (!isHtml) conversationHistory.push({ role: sender, content: text });
 }
 
@@ -76,10 +84,10 @@ function hideTypingIndicator() {
 }
 
 // =================================================================
-// CONEXÃO COM A IA
+// CONEXÃO COM A IA (Cloudflare Worker)
 // =================================================================
 
-async function sendToGemini(userMessage, imageBase64 = null) {
+async function sendToGemini(userMessage, imageBase64 = null, mimeType = null) {
     try {
         const response = await fetch(WORKER_URL, {
             method: 'POST',
@@ -88,7 +96,8 @@ async function sendToGemini(userMessage, imageBase64 = null) {
                 message: userMessage,
                 history: conversationHistory,
                 leadData: leadData,
-                imageBase64: imageBase64
+                imageBase64: imageBase64,
+                mimeType: mimeType
             })
         });
         if (!response.ok) throw new Error('Erro API');
@@ -96,12 +105,12 @@ async function sendToGemini(userMessage, imageBase64 = null) {
         return data.response;
     } catch (error) {
         console.error(error);
-        return "Minha conexão oscilou. Pode repetir?";
+        return "Minha conexão oscilou um pouquinho. Pode repetir?";
     }
 }
 
 // =================================================================
-// FLUXO INICIAL
+// FLUXO INICIAL (Inicia ao carregar a página)
 // =================================================================
 
 function startConversation() {
@@ -114,7 +123,7 @@ function startConversation() {
             addMessage("Vou analisar seu perfil para descobrirmos quanto você pode economizar (Solar ou Assinatura).");
             setTimeout(() => {
                 addMessage("Pra começar e eu personalizar sua análise: **Em qual cidade você mora?**");
-                showSimpleInput(); 
+                showSimpleInput(); // Começa com input de texto simples
             }, 800);
         }, 1000);
     }, 600);
@@ -143,55 +152,61 @@ function showSimpleInput() {
 }
 
 // =================================================================
-// CONTROLADOR DE FLUXO
+// CONTROLADOR DE FLUXO PRINCIPAL
 // =================================================================
 
 async function handleFlow(userText) {
     showTypingIndicator();
 
+    // 1. Captura Inteligente de Dados
+    // Se ainda não temos cidade e é a primeira interação
     if (!leadData.city) {
         leadData.city = userText;
         updateProgress(30);
     }
 
-    // Captura valor se estiver em modo manual
+    // Tenta extrair valor numérico da fatura se estiver em modo manual
     if (manualInputMode && !leadData.billValue) {
         const numbers = userText.match(/\d+/g);
         if (numbers) {
             leadData.billValue = numbers.join('');
+            // Atualiza progresso pois conseguimos um dado importante
             updateProgress(60);
         }
     }
 
+    // 2. Envia para a IA decidir o que falar
     const response = await sendToGemini(userText);
     hideTypingIndicator();
 
+    // 3. Verifica Gatilhos Especiais na resposta da IA
+
+    // GATILHO FINAL: Agendamento
     if (response.includes("#TRIGGER_CALENDLY#")) {
         addMessage("Excelente! Vamos agendar sua consultoria para garantir essa condição.", 'ia');
         triggerFinalFlow();
-    } else {
+    } 
+    
+    // GATILHO DE FATURA (Meio do fluxo)
+    // Se a IA sugerir envio da conta, mostramos o botão de upload
+    // MAS APENAS SE o usuário não tiver optado por digitar manualmente antes
+    else if (!manualInputMode && (response.toLowerCase().includes("fatura") || response.toLowerCase().includes("conta de luz"))) {
         addMessage(response, 'ia');
-        
-        // CORREÇÃO DO LOOP:
-        // Só mostra botões de upload se NÃO estivermos em modo manual.
-        // Se manualInputMode for true, ignoramos qualquer sugestão de "fatura" da IA
-        // e mantemos o input de texto simples.
-        const suggestsBill = response.toLowerCase().includes("fatura") || response.toLowerCase().includes("conta de luz") || response.toLowerCase().includes("digitar o valor");
-        
-        if (!manualInputMode && suggestsBill) {
-            showBillInputOptions();
-        } else {
-            // Garante que o campo de texto esteja visível se não for mostrar botões
-            // Verifica se o inputContainer já tem o form, se não, recria
-            if (!document.getElementById('chat-form')) {
-                showSimpleInput();
-            }
+        showBillInputOptions();
+    } 
+    
+    // CONVERSA NORMAL
+    else {
+        addMessage(response, 'ia');
+        // Se os botões não estiverem na tela, garante o input de texto
+        if (!document.getElementById('chat-form')) {
+            showSimpleInput();
         }
     }
 }
 
 // =================================================================
-// OPÇÕES DE FATURA
+// UPLOAD DE CONTA vs DIGITAÇÃO MANUAL
 // =================================================================
 
 function showBillInputOptions() {
@@ -211,25 +226,25 @@ function showBillInputOptions() {
 }
 
 function restoreManualInput() {
-    manualInputMode = true; // TRAVA O MODO MANUAL
+    manualInputMode = true; // TRAVA O MODO MANUAL (Impede loop de botões)
     addMessage("Prefiro digitar o valor.", 'user');
     
     // Restaura o input IMEDIATAMENTE para o usuário digitar
     showSimpleInput(); 
     
-    // Opcional: Mandar mensagem oculta pra IA saber que vai digitar,
-    // mas não é estritamente necessário se o usuário já vai digitar em seguida.
-    // Se quiser que a IA responda "Ok, digite", descomente abaixo:
-    // handleFlow("Vou digitar o valor manualmente.");
+    // Força a IA a reagir e perguntar o valor
+    handleFlow("Vou digitar o valor manualmente.");
 }
 
 async function handleFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    uploadedFile = file;
+    uploadedFile = file; // Guarda o arquivo para anexar no email final
+    const fileName = file.name;
+    const fileType = file.type;
     
-    addMessage(`<div class="flex items-center gap-2"><i data-lucide="file-check" class="w-4 h-4"></i> Arquivo anexado: ${file.name}</div>`, 'user', true);
+    addMessage(`<div class="flex items-center gap-2"><i data-lucide="file-check" class="w-4 h-4"></i> Recebi: ${fileName}</div>`, 'user', true);
     inputContainer.innerHTML = ''; 
     updateProgress(60);
     
@@ -239,32 +254,44 @@ async function handleFileSelect(event) {
     const reader = new FileReader();
     reader.onloadend = async function() {
         const base64String = reader.result;
-        const aiResponse = await sendToGemini("O cliente enviou a fatura. Analise e apresente a economia acumulada em 5 Anos (com inflação) e impacto ambiental. Não fale porcentagens.", base64String);
+        // Pede para a IA simular com base na imagem (Instrução Visionária)
+        const aiResponse = await sendToGemini(
+            "O cliente enviou a fatura. Analise e apresente a economia acumulada em 5 Anos (com inflação) e impacto ambiental. Não fale porcentagens.", 
+            base64String, 
+            fileType
+        );
         
         hideTypingIndicator();
         addMessage(aiResponse, 'ia');
-        showSimpleInput(); 
+        showSimpleInput(); // Volta o input normal para continuar conversando
     };
     reader.readAsDataURL(file);
 }
 
 // =================================================================
-// FINALIZAÇÃO
+// FINALIZAÇÃO: CALENDLY + EMAIL + WHATSAPP
 // =================================================================
 
 function triggerFinalFlow() {
     updateProgress(100);
+    
+    // 1. Envia o email silenciosamente com todo o histórico e anexo
     sendEmailReport();
 
+    // 2. Mostra os botões finais na tela
     inputContainer.innerHTML = `
         <div class="flex flex-col gap-3 w-full animate-fade-in p-2">
             <div class="bg-green-50 text-green-800 p-3 rounded-lg text-center text-sm font-medium border border-green-200">
                 ✅ Pré-análise aprovada!
             </div>
+            
+            <!-- Botão Calendly (Principal) -->
             <button onclick="openCalendly()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform hover:scale-105">
                 <i data-lucide="calendar-check" class="w-5 h-5"></i>
                 Agendar Reunião Agora
             </button>
+            
+            <!-- Link WhatsApp (Secundário) -->
             <a href="${generateWhatsappLink()}" target="_blank" class="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-sm">
                 <i data-lucide="message-circle" class="w-4 h-4"></i>
                 Falar direto no WhatsApp
@@ -277,9 +304,11 @@ function triggerFinalFlow() {
 }
 
 function openCalendly() {
+    // Tenta abrir o Widget do Calendly
     if (window.Calendly) {
         window.Calendly.initPopupWidget({ url: CALENDLY_LINK });
     } else {
+        // Se falhar (bloqueador de popups), abre em nova aba
         window.open(CALENDLY_LINK, '_blank');
     }
 }
@@ -290,6 +319,7 @@ function generateWhatsappLink() {
 }
 
 async function sendEmailReport() {
+    // Formata histórico para HTML bonito
     let htmlHistory = conversationHistory.map(msg => 
         `<p style="margin-bottom: 5px;"><b>${msg.role.toUpperCase()}:</b> ${msg.content}</p>`
     ).join('');
@@ -299,7 +329,7 @@ async function sendEmailReport() {
             <h2 style="color: #16a34a;">🚀 Novo Lead Qualificado (Via Zee IA)</h2>
             <p>Cliente chegou na fase de agendamento.</p>
             <hr>
-            <h3>📊 Dados Capturados</h3>
+            <h3>📊 Dados Capturados (Estimados)</h3>
             <ul>
                 <li><b>Cidade:</b> ${leadData.city || "Ver histórico"}</li>
                 <li><b>Tipo:</b> ${leadData.propertyType || "Ver histórico"}</li>
@@ -318,13 +348,16 @@ async function sendEmailReport() {
     formData.append("subject", `🔥 Lead Enerzee: ${leadData.city || 'Novo'} - ${leadData.propertyType || 'Consultoria'}`);
     formData.append("message", htmlBody); 
     
+    // Anexa a foto da conta se tiver
     if (uploadedFile) {
         formData.append("attachment", uploadedFile);
     }
 
+    // Disparo silencioso (sem travar o chat)
     fetch('https://api.web3forms.com/submit', { method: 'POST', body: formData });
 }
 
+// Inicialização
 window.onload = () => {
     if (typeof lucide !== 'undefined') lucide.createIcons();
     startConversation();
