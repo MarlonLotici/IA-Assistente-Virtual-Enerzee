@@ -219,14 +219,14 @@ async function handleFileSelect(event) {
     inputContainer.innerHTML = ''; 
     updateProgress(60);
     
-    addMessage("🔍 O Zee está analisando sua fatura... Calculando desconto estimado de 13.7%... Só um instante.", 'ia');
+    addMessage("🔍 O Zee está analisando sua fatura... Calculando potencial de economia... Só um instante.", 'ia');
     showTypingIndicator();
 
     const reader = new FileReader();
     reader.onloadend = async function() {
         const base64String = reader.result;
-        // Pede para a IA simular com base na imagem
-        const aiResponse = await sendToGemini("O cliente enviou a fatura. Analise o consumo, aplique a regra de 13.7% de desconto e apresente a estimativa.", base64String);
+        // Pede para a IA simular com base na imagem (Prompt Atualizado)
+        const aiResponse = await sendToGemini("O cliente enviou a fatura. Analise e apresente a economia projetada em 5 Anos (inflação), 1 Ano e Mensal. Cite o impacto ambiental. Não fale porcentagens.", base64String);
         
         hideTypingIndicator();
         addMessage(aiResponse, 'ia');

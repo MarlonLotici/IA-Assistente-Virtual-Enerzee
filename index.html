@@ -4,62 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enerzee - Consultoria Inteligente</title>
-    <!-- Tailwind CSS -->
+    
+    <!-- Tailwind CSS (Estilização Rápida) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Ícones Lucide -->
+    
+    <!-- Ícones Lucide (Para o Mascote e Botões) -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Fonte Poppins -->
+    
+    <!-- Fonte Poppins (Design Moderno) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Calendly Widget CSS -->
+    
+    <!-- CSS do Widget do Calendly (Essencial para o Popup) -->
     <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
     
     <style>
+        /* Configuração Geral de Fonte */
         body { font-family: 'Poppins', sans-serif; }
+        
+        /* Animação de Entrada das Mensagens */
         .chat-message { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Balões de Chat Modernos */
+        /* Design dos Balões de Chat */
         .bubble-ia {
             background: #ffffff;
             color: #334155;
-            border-top-left-radius: 2px;
+            border-top-left-radius: 2px; /* Ponta do balão */
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             border: 1px solid #e2e8f0;
         }
+        
         .bubble-user {
             background: #16a34a; /* Verde Enerzee */
             color: white;
-            border-top-right-radius: 2px;
+            border-top-right-radius: 2px; /* Ponta do balão */
             box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
         }
 
-        /* Animação de Digitação */
+        /* Animação dos Três Pontinhos (...) */
         .typing-dot { animation: bounce 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
         
-        /* Esconder barra de rolagem */
+        /* Utilitário para esconder a barra de rolagem mantendo a função */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-50 flex items-center justify-center min-h-screen p-0 md:p-4">
 
+    <!-- Container Principal (Estilo App Mobile) -->
     <main class="w-full max-w-lg bg-white md:rounded-3xl shadow-xl overflow-hidden flex flex-col h-screen md:h-[90vh] relative border border-slate-100">
         
-        <!-- Header Premium com Mascote -->
+        <!-- Header Premium com Mascote Zee -->
         <header class="bg-white p-4 flex items-center gap-4 border-b border-slate-100 shadow-sm z-20">
             <div class="relative">
-                <!-- Avatar do Mascote Zee -->
+                <!-- Avatar Circular do Mascote -->
                 <div class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center border-2 border-green-100">
+                    <!-- Ícone de Pássaro (Zee) -->
                     <i data-lucide="bird" class="w-7 h-7 text-green-600"></i>
                 </div>
-                <!-- Status Online -->
+                <!-- Bolinha Verde de Status Online -->
                 <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full animate-pulse"></span>
             </div>
+            
+            <!-- Texto do Header -->
             <div>
-                <h1 class="text-lg font-bold text-slate-800 leading-tight">Zee <span class="text-[10px] font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full uppercase tracking-wide">IA Enerzee</span></h1>
+                <h1 class="text-lg font-bold text-slate-800 leading-tight flex items-center gap-2">
+                    Zee 
+                    <span class="text-[10px] font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full uppercase tracking-wide">IA Enerzee</span>
+                </h1>
                 <p class="text-xs text-slate-400">Consultor de Economia</p>
             </div>
         </header>
@@ -69,23 +84,24 @@
             <div id="progress-bar" class="bg-green-500 h-1 transition-all duration-700" style="width: 5%"></div>
         </div>
 
-        <!-- Área do Chat -->
+        <!-- Área do Chat (Onde as mensagens aparecem) -->
         <div id="chat-messages" class="flex-grow overflow-y-auto p-4 space-y-6 bg-[#f8fafc] no-scrollbar pb-32">
-            <!-- Mensagens injetadas via JS -->
+            <!-- As mensagens serão injetadas aqui pelo Javascript -->
         </div>
 
         <!-- Área de Input Fixa (Rodapé) -->
         <div class="p-4 bg-white border-t border-slate-100 absolute bottom-0 w-full z-20">
             <div id="input-container" class="w-full">
-                <!-- Inputs dinâmicos aparecem aqui -->
+                <!-- Os botões e campos de texto aparecem aqui dinamicamente -->
             </div>
         </div>
     </main>
 
     <!-- Scripts Essenciais -->
-    <!-- Widget do Calendly (necessário para o popup funcionar) -->
+    <!-- Script do Calendly (Necessário para abrir o popup de agendamento) -->
     <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
-    <!-- Seu Script Lógico -->
+    
+    <!-- Seu Script de Lógica (Certifique-se que o arquivo script.js está na mesma pasta) -->
     <script src="script.js"></script>
 </body>
 </html>
