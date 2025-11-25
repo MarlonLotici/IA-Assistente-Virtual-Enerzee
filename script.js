@@ -4,7 +4,7 @@
 const WORKER_URL = "https://jolly-morning-6b1f.marlonlotici6.workers.dev/"; 
 const WEB3FORMS_ACCESS_KEY = "4ee5d80b-0860-4b79-a30d-5c0392c46ff4"; 
 const WHATSAPP_NUMBER = "5546999201690"; 
-const CALENDLY_LINK = "https://calendly.com/marlon-enerzee/consultoria"; 
+const CALENDLY_LINK = "https://calendly.com/marlonlotici2/consultoria-energetica"; 
 
 // =================================================================
 // ESTADO
