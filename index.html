@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enerzee - Assistente Inteligente</title>
+    <title>Enerzee - Consultoria Inteligente</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Ícones Lucide -->
@@ -18,19 +18,19 @@
         .chat-message { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Bolhas de Chat Modernas */
+        /* Balões de Chat Modernos */
         .bubble-ia {
-            background: white;
-            color: #1f2937;
-            border-top-left-radius: 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border: 1px solid #f3f4f6;
+            background: #ffffff;
+            color: #334155;
+            border-top-left-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
         }
         .bubble-user {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: #16a34a; /* Verde Enerzee */
             color: white;
-            border-top-right-radius: 0;
-            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+            border-top-right-radius: 2px;
+            box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
         }
 
         /* Animação de Digitação */
@@ -39,51 +39,53 @@
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
         
-        /* Scrollbar invisível */
+        /* Esconder barra de rolagem */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-50 to-slate-200 flex items-center justify-center min-h-screen p-0 md:p-4">
+<body class="bg-slate-50 flex items-center justify-center min-h-screen p-0 md:p-4">
 
-    <main class="w-full max-w-lg bg-white md:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-screen md:h-[90vh] relative">
+    <main class="w-full max-w-lg bg-white md:rounded-3xl shadow-xl overflow-hidden flex flex-col h-screen md:h-[90vh] relative border border-slate-100">
         
-        <!-- Cabeçalho com Mascote -->
-        <header class="bg-white p-4 flex items-center gap-4 border-b border-gray-100 shadow-sm z-10">
+        <!-- Header Premium com Mascote -->
+        <header class="bg-white p-4 flex items-center gap-4 border-b border-slate-100 shadow-sm z-20">
             <div class="relative">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-green-500">
-                    <!-- Ícone Mascote (Pássaro) -->
+                <!-- Avatar do Mascote Zee -->
+                <div class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center border-2 border-green-100">
                     <i data-lucide="bird" class="w-7 h-7 text-green-600"></i>
                 </div>
+                <!-- Status Online -->
                 <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full animate-pulse"></span>
             </div>
             <div>
-                <h1 class="text-lg font-bold text-slate-800">Zee <span class="text-xs font-normal text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Online</span></h1>
-                <p class="text-xs text-gray-500">Especialista em Economia Enerzee</p>
+                <h1 class="text-lg font-bold text-slate-800 leading-tight">Zee <span class="text-[10px] font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full uppercase tracking-wide">IA Enerzee</span></h1>
+                <p class="text-xs text-slate-400">Consultor de Economia</p>
             </div>
         </header>
 
         <!-- Barra de Progresso -->
-        <div class="bg-gray-100 w-full h-1">
-            <div id="progress-bar" class="bg-gradient-to-r from-green-400 to-green-600 h-1 transition-all duration-700" style="width: 5%"></div>
+        <div class="bg-slate-100 w-full h-1">
+            <div id="progress-bar" class="bg-green-500 h-1 transition-all duration-700" style="width: 5%"></div>
         </div>
 
         <!-- Área do Chat -->
-        <div id="chat-messages" class="flex-grow overflow-y-auto p-4 space-y-5 bg-[#f8fafc] no-scrollbar pb-24">
+        <div id="chat-messages" class="flex-grow overflow-y-auto p-4 space-y-6 bg-[#f8fafc] no-scrollbar pb-32">
             <!-- Mensagens injetadas via JS -->
         </div>
 
-        <!-- Área de Input Fixa -->
-        <div class="p-4 bg-white border-t border-gray-100 absolute bottom-0 w-full">
+        <!-- Área de Input Fixa (Rodapé) -->
+        <div class="p-4 bg-white border-t border-slate-100 absolute bottom-0 w-full z-20">
             <div id="input-container" class="w-full">
-                <!-- Inputs dinâmicos -->
+                <!-- Inputs dinâmicos aparecem aqui -->
             </div>
         </div>
     </main>
 
-    <!-- Scripts -->
-    <!-- Calendly Widget (Necessário para abrir o popup) -->
+    <!-- Scripts Essenciais -->
+    <!-- Widget do Calendly (necessário para o popup funcionar) -->
     <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+    <!-- Seu Script Lógico -->
     <script src="script.js"></script>
 </body>
 </html>
